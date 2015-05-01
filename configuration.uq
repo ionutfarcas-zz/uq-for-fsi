@@ -1,0 +1,66 @@
+#--------------------------------------------------------------------------#
+#               configuration file for the uq simulation                   #
+# convention: 1.lines that start with # will the ignored;                  #
+#             2.data lines are of the form: name = value                   #
+#             3.no empty lines                                             #
+#--------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
+#                            GENERAL SETUP                                 #
+#--------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
+# external files location; src location assumed to be testcase/uq code/src #
+#--------------------------------------------------------------------------#
+nastin_dat = ../../nastin/Flap.nsi.dat
+solidz_dat = ../../solidz/Flap.sld.dat
+run_exec = ../tools/alya_run/runs
+output_data = ../../solidz/RightCorner.watchpoint.txt
+gather_data_exec_mc = ../tools/data/gather_data_mc
+postproc_stat_exec_mc = ../tools/postprocessing/postprocessing_stat_mc
+postproc_file_all_mc = ../tools/data/results/RightCorner.watchpoint.mc.txt
+postproc_stat_mc = ../tools/postprocessing/results/Statistics.mc.txt
+gather_data_exec_sc = ../tools/data/gather_data_sc
+get_output_sc = ../tools/data/get_output_sc
+postproc_stat_exec_sc = ../tools/postprocessing/postprocessing_stat_sc
+output_file_sc = ../tools/data/results/RightCorner.watchpoint.sc.txt
+coeff_sc = ../tools/data/results/coeff.sc.txt
+postproc_stat_sc = ../tools/postprocessing/results/Statistics.sc.txt
+insert_nastin_exec = ../tools/util/insert_params_nastin_1d
+insert_solidz_exec = ../tools/util/insert_params_solidz_1d
+#--------------------------------------------------------------------------#
+#  uq method: 0 -> monte carlo, 1 -> stochastic collocations               #
+#--------------------------------------------------------------------------#
+uq_method = 1                                                     
+#--------------------------------------------------------------------------#
+#              pdf: 0 -> normal, 1 -> uniform                              #
+#--------------------------------------------------------------------------#
+pdf = 0
+#--------------------------------------------------------------------------#
+#                      nsamples for MCS                                    #
+#--------------------------------------------------------------------------#
+nsamples = 100
+#--------------------------------------------------------------------------#
+#           degree of truncation for for SCS                               #
+#--------------------------------------------------------------------------#
+ncoeff = 5
+#--------------------------------------------------------------------------#
+#                  quadrature degree for SCS                               #
+#--------------------------------------------------------------------------#
+quad_degree = 6
+#--------------------------------------------------------------------------#
+#                       STOCHASTICS  SETUP                                 #
+#--------------------------------------------------------------------------#
+#--------------------------------------------------------------------------#
+#                   fluid problem: density                                 #
+#--------------------------------------------------------------------------#
+rho_f_p1 = 0.01
+rho_f_p2 = 0.01
+#--------------------------------------------------------------------------#
+#                   fluid problem: viscosity                               #
+#--------------------------------------------------------------------------#
+nu_f_p1 = 0.03
+nu_f_p2 = 0.01
+#--------------------------------------------------------------------------#
+#                   structure problem: density                             #
+#--------------------------------------------------------------------------#
+rho_s_p1 = 0.01
+rho_s_p2 = 0.01
