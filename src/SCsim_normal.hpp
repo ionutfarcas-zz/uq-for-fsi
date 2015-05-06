@@ -183,6 +183,7 @@ public:
 			for (int i = 0; i < quad_degree; ++i)
 			{
 				temp = sqrt(2)*pre_proc_result[i]*nu_f_p2 + nu_f_p1;
+				assert(temp >= 0);
 				modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, temp);
 				
 				modify_nastin_data_ok = system(modify_nastin_data.c_str());
@@ -202,18 +203,14 @@ public:
 				force0 = get_output_values[1];
 				force1 = get_output_values[2];
 
-				temp_disp_x += disp_x*ghq.orthogonal_poly(j, pre_proc_result[i]) * pre_proc_result[quad_degree + i];
-				temp_force0 += force0*ghq.orthogonal_poly(j, pre_proc_result[i]) * pre_proc_result[quad_degree + i];
-				temp_force1 += force1*ghq.orthogonal_poly(j, pre_proc_result[i]) * pre_proc_result[quad_degree + i];
+				temp_disp_x += disp_x*ghq.orthogonal_poly(j, sqrt(2)*pre_proc_result[i]) * pre_proc_result[quad_degree + i];
+				temp_force0 += force0*ghq.orthogonal_poly(j, sqrt(2)*pre_proc_result[i]) * pre_proc_result[quad_degree + i];
+				temp_force1 += force1*ghq.orthogonal_poly(j, sqrt(2)*pre_proc_result[i]) * pre_proc_result[quad_degree + i];
 			}
 
-			temp_disp_x = temp_disp_x/sqrt(M_PI);
-			temp_force0 = temp_force0/sqrt(M_PI);
-			temp_force1 = temp_force1/sqrt(M_PI);
-
-			temp_disp_x = temp_disp_x/ghq.norm_factor(j);
-			temp_force0 = temp_force0/ghq.norm_factor(j);
-			temp_force1 = temp_force1/ghq.norm_factor(j);
+			temp_disp_x = temp_disp_x/(sqrt(M_PI)*ghq.norm_factor(j));
+			temp_force0 = temp_force0/(sqrt(M_PI)*ghq.norm_factor(j));
+			temp_force1 = temp_force1/(sqrt(M_PI)*ghq.norm_factor(j));
 
 			save_coeff_ok = save_coeff(coeff_sc, temp_disp_x, temp_force0, temp_force1);
 			assert(save_coeff_ok == 1);		

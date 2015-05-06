@@ -145,6 +145,14 @@ public:
 		return nodes_weights;
 	}
 
+	virtual std::vector<double> pre_processing(const double& param1, const double& param2) const
+	{
+		// do nothing; useful only for MCS
+		std::vector<double> dummy;
+
+		return dummy;
+	}
+
 	virtual void simulation(std::vector<double>& pre_proc_result) const
 	{
 		std::string modify_nastin_data;
@@ -175,6 +183,7 @@ public:
 			for (int i = 0; i < quad_degree; ++i)
 			{
 				temp = pre_proc_result[i]*nu_f_p2 + nu_f_p1;
+				assert(temp >= 0);
 				modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, temp);
 				
 				modify_nastin_data_ok = system(modify_nastin_data.c_str());
@@ -194,9 +203,9 @@ public:
 				force0 = get_output_values[1];
 				force1 = get_output_values[2];
 
-				temp_disp_x += disp_x*ghq.orthogonal_poly(j, pre_proc_result[i]) * pre_proc_result[quad_degree + i];
-				temp_force0 += force0*ghq.orthogonal_poly(j, pre_proc_result[i]) * pre_proc_result[quad_degree + i];
-				temp_force1 += force1*ghq.orthogonal_poly(j, pre_proc_result[i]) * pre_proc_result[quad_degree + i];
+				temp_disp_x += disp_x*glq.orthogonal_poly(j, pre_proc_result[i]) * pre_proc_result[quad_degree + i];
+				temp_force0 += force0*glq.orthogonal_poly(j, pre_proc_result[i]) * pre_proc_result[quad_degree + i];
+				temp_force1 += force1*glq.orthogonal_poly(j, pre_proc_result[i]) * pre_proc_result[quad_degree + i];
 			}
 
 			temp_disp_x = temp_disp_x/glq.norm_factor(j);

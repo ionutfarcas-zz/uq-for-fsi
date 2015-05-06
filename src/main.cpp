@@ -2,6 +2,7 @@
 #include "MCsim_normal.hpp"
 #include "MCsim_uniform.hpp"
 #include "SCsim_normal.hpp"
+#include "SCsim_uniform.hpp"
 
 int main(int argc, char** argv)
 {
@@ -150,7 +151,7 @@ int main(int argc, char** argv)
     }
     else if (uq_method == 1 && pdf == 1)
     {
-         SCSimulation_normal scs_u(
+         SCSimulation_uniform scs_u(
             nastin_dat, 
             solidz_dat, 
             run_exec, 

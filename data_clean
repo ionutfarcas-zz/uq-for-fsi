@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cd tools/data/results/	
+rm *
+cd ../../postprocessing/results/
+rm *
