@@ -6,36 +6,12 @@
 from os import rename, remove
 from sys import argv, exit, stdout
 from traceback import print_exc
-import matplotlib.pyplot as plt
-import numpy as np
 
 newline = str('\n')
 onespace = str(' ')
 
 # get output
 def gather_output():
-
-	# try:
-	# 	with open(datafile, 'r') as input_file:
-	# 		with open(datafile_out, 'w') as output_file:
-
-	# 			for line in input_file:
-	# 				if line.startswith("DATA") or line.startswith("Time"):
-	# 					continue
-	# 				else:
-	# 					line_tokens = line.split()
-
-	# 					output_file.write(line_tokens[3] + onespace)
-	# 					output_file.write(line_tokens[7] + onespace)
-	# 					output_file.write(line_tokens[8] + onespace)
-	# 					output_file.write(newline)
-
-	# 	input_file.close()
-	# 	output_file.close()
-		
-	# except IOError:
-	# 	print_exc(file = stdout)
-	# 	exit(0)
 
 	disp_x = 0.0;
 	force0 = 0.0;
@@ -62,7 +38,7 @@ def gather_output():
 if __name__ == "__main__":
 
 	if len(argv) != 2:
-		print "Error in processing_scs!"
+		print "Error in " + argv[0] + "!"
 		print "Usage: " + argv[0] + " datafile"
 		exit(0)
 

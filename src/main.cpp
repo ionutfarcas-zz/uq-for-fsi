@@ -23,6 +23,7 @@ int main(int argc, char** argv)
     std::string postproc_stat_sc;
     std::string insert_nastin_exec;
     std::string insert_solidz_exec;
+    std::string gather_alya_output;
 
     unsigned int uq_method = 0;
     unsigned int pdf = 0;
@@ -55,7 +56,8 @@ int main(int argc, char** argv)
         coeff_sc, 
         postproc_stat_sc, 
         insert_nastin_exec, 
-        insert_solidz_exec, 
+        insert_solidz_exec,
+        gather_alya_output, 
         uq_method, 
         pdf, 
         nsamples, 
@@ -84,7 +86,8 @@ int main(int argc, char** argv)
             postproc_file_all_mc, 
             postproc_stat_mc, 
             insert_nastin_exec, 
-            insert_solidz_exec, 
+            insert_solidz_exec,
+            gather_alya_output, 
             nsamples, rho_f_p1, 
             rho_f_p2, 
             nu_f_p1, 
@@ -108,9 +111,9 @@ int main(int argc, char** argv)
             postproc_file_all_mc, 
             postproc_stat_mc, 
             insert_nastin_exec, 
-            insert_solidz_exec, 
-            nsamples, 
-            rho_f_p1, 
+            insert_solidz_exec,
+            gather_alya_output, 
+            nsamples, rho_f_p1, 
             rho_f_p2, 
             nu_f_p1, 
             nu_f_p2, 
@@ -135,7 +138,8 @@ int main(int argc, char** argv)
             coeff_sc,
             postproc_stat_sc, 
             insert_nastin_exec, 
-            insert_solidz_exec, 
+            insert_solidz_exec,
+            gather_alya_output, 
             ncoeff, 
             quad_degree, 
             rho_f_p1, 
@@ -163,7 +167,8 @@ int main(int argc, char** argv)
             coeff_sc,
             postproc_stat_sc, 
             insert_nastin_exec, 
-            insert_solidz_exec, 
+            insert_solidz_exec,
+            gather_alya_output,  
             ncoeff, 
             quad_degree, 
             rho_f_p1, 

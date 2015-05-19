@@ -69,6 +69,14 @@ std::string run_get_output(const std::string get_output, const std::string data)
 	return caller.str();
 }
 
+std::string run_gather_alya_output(const std::string get_alya_output, const int& run_id)
+{
+	std::stringstream caller;
+	caller << get_alya_output << " " << run_id;
+
+	return caller.str();
+}
+
 int parse_configfile(const std::string& config_file_name,
 	std::string& nastin_dat,
 	std::string& solidz_dat,
@@ -86,6 +94,7 @@ int parse_configfile(const std::string& config_file_name,
 	std::string& postproc_stat_sc,
 	std::string& insert_nastin_exec,
 	std::string& insert_solidz_exec,
+	std::string& gather_alya_output,
 	unsigned int& uq_method,
 	unsigned int& pdf,
 	unsigned int& nsamples,
@@ -180,6 +189,10 @@ int parse_configfile(const std::string& config_file_name,
 			else if(token_1.compare("insert_solidz_exec") == 0)
 			{
 				insert_solidz_exec = token_3;
+			}
+			else if(token_1.compare("gather_alya_output") == 0)
+			{
+				gather_alya_output = token_3;
 			}
 			else if(token_1.compare("uq_method") == 0)
 			{

@@ -32,6 +32,7 @@ private:
 	std::string postproc_stat_sc;
 	std::string insert_nastin_exec;
 	std::string insert_solidz_exec;
+	std::string gather_alya_output;
 
 	GaussHermiteQuadrature ghq;
 
@@ -47,23 +48,7 @@ private:
 	}
 
 public:
-	SCSimulation_normal(
-		const int& _rank, 
-		const int& _nprocs, 
-		const int& _ncoeff, 
-		const int& _quad_degree,
-		const double& _mean, 
-		const double& _std_dev)
-	{
-		assert(_ncoeff >= _nprocs);
-
-		rank = _rank;
-		nprocs = _nprocs;
-		ncoeff = _ncoeff;
-		quad_degree = _quad_degree;
-		mean = _mean;
-		std_dev = _std_dev;
-	}
+	SCSimulation_normal() {}
 
 	SCSimulation_normal(
 		std::string& _nastin_dat, 
@@ -77,7 +62,8 @@ public:
 		std::string& _coeff_sc,
 		std::string& _postproc_stat_sc,
 		std::string& _insert_nastin_exec, 
-		std::string& _insert_solidz_exec, 
+		std::string& _insert_solidz_exec,
+		std::string& _gather_alya_output,  
 		const unsigned int& _ncoeff, 
 		const unsigned int& _quad_degree,
 		const double& _rho_f_p1, 
@@ -102,6 +88,7 @@ public:
 		postproc_stat_sc = _postproc_stat_sc;
 		insert_nastin_exec = _insert_nastin_exec;
 		insert_solidz_exec = _insert_solidz_exec;
+		gather_alya_output = _gather_alya_output;
 
 		rho_f_p1 = _rho_f_p1;
 		rho_f_p2 = _rho_f_p2;
@@ -157,11 +144,13 @@ public:
 	{
 		std::string modify_nastin_data;
 		std::string get_data;
+		std::string get_alya_output;
 		std::string get_output;
 
 		int run_ok = 0;
 		int modify_nastin_data_ok = 0;
 		int get_data_ok = 0;
+		int gather_alya_output_ok = 0;
 		int save_coeff_ok = 0;
 
 		double temp = 0.0;
@@ -172,7 +161,42 @@ public:
 		double force0 = 0.0;
 		double force1 = 0.0;
 
+		std::vector<double> disp_x_all;
+		std::vector<double> force0_all;
+		std::vector<double> force1_all;
 		std::vector<double> get_output_values;
+
+		for (int i = 0; i < quad_degree; ++i)
+		{
+			temp = sqrt(2)*pre_proc_result[i]*nu_f_p2 + nu_f_p1;
+			assert(temp >= 0);
+			modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, temp);
+
+			modify_nastin_data_ok = system(modify_nastin_data.c_str());
+			assert(modify_nastin_data_ok >= 0);
+
+			run_ok = system(run_exec.c_str());
+			assert(run_ok >= 0);
+
+			get_alya_output = run_gather_alya_output(gather_alya_output, i + 1);
+			gather_alya_output_ok = system(get_alya_output.c_str());
+			assert(gather_alya_output_ok >=0);
+
+			get_data = run_gather_data(gather_data_exec_sc, output_data, output_file_sc, i + 1);
+			get_data_ok = system(get_data.c_str());
+			assert(get_data_ok >= 0);
+
+			get_output = run_get_output(get_output_sc, output_file_sc);
+			get_output_values = get_output_data(get_output);
+
+			disp_x = get_output_values[0];
+			force0 = get_output_values[1];
+			force1 = get_output_values[2];
+
+			disp_x_all.push_back(disp_x);
+			force0_all.push_back(force0);
+			force1_all.push_back(force1);
+		}
 
 		for(int j = 0 ; j < ncoeff ; ++j)
 		{
@@ -182,35 +206,14 @@ public:
 
 			for (int i = 0; i < quad_degree; ++i)
 			{
-				temp = sqrt(2)*pre_proc_result[i]*nu_f_p2 + nu_f_p1;
-				assert(temp >= 0);
-				modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, temp);
-				
-				modify_nastin_data_ok = system(modify_nastin_data.c_str());
-				assert(modify_nastin_data_ok >= 0);
-
-				run_ok = system(run_exec.c_str());
-				assert(run_ok >= 0);
-
-				get_data = run_gather_data(gather_data_exec_sc, output_data, output_file_sc, j*quad_degree + i + 1);
-				get_data_ok = system(get_data.c_str());
-				assert(get_data_ok >= 0);
-
-				get_output = run_get_output(get_output_sc, output_file_sc);
-				get_output_values = get_output_data(get_output);
-				
-				disp_x = get_output_values[0];
-				force0 = get_output_values[1];
-				force1 = get_output_values[2];
-
-				temp_disp_x += disp_x*ghq.orthogonal_poly(j, sqrt(2)*pre_proc_result[i]) * pre_proc_result[quad_degree + i];
-				temp_force0 += force0*ghq.orthogonal_poly(j, sqrt(2)*pre_proc_result[i]) * pre_proc_result[quad_degree + i];
-				temp_force1 += force1*ghq.orthogonal_poly(j, sqrt(2)*pre_proc_result[i]) * pre_proc_result[quad_degree + i];
+				temp_disp_x += disp_x_all[i]*ghq.orthogonal_poly(j, sqrt(2)*pre_proc_result[i]) * pre_proc_result[quad_degree + i]/sqrt(M_PI);
+				temp_force0 += force0_all[i]*ghq.orthogonal_poly(j, sqrt(2)*pre_proc_result[i]) * pre_proc_result[quad_degree + i]/sqrt(M_PI);
+				temp_force1 += force1_all[i]*ghq.orthogonal_poly(j, sqrt(2)*pre_proc_result[i]) * pre_proc_result[quad_degree + i]/sqrt(M_PI);
 			}
 
-			temp_disp_x = temp_disp_x/(sqrt(M_PI)*ghq.norm_factor(j));
-			temp_force0 = temp_force0/(sqrt(M_PI)*ghq.norm_factor(j));
-			temp_force1 = temp_force1/(sqrt(M_PI)*ghq.norm_factor(j));
+			temp_disp_x = temp_disp_x/ghq.norm_factor(j);
+			temp_force0 = temp_force0/ghq.norm_factor(j);
+			temp_force1 = temp_force1/ghq.norm_factor(j);
 
 			save_coeff_ok = save_coeff(coeff_sc, temp_disp_x, temp_force0, temp_force1);
 			assert(save_coeff_ok == 1);		

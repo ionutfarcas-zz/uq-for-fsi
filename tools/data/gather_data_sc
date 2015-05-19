@@ -43,7 +43,7 @@ if __name__ == "__main__":
 	# take command line arguments; variable names show which parameters are to be modified
 
 	if len(argv) != 4:
-		print "Error in preprocessing_all_sc!"
+		print "Error in " + argv[0] + "!"
 		print "Usage: " + argv[0] + " datafile datafile_output simulation_no"
 		exit(0)
 

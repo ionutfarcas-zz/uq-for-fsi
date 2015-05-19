@@ -29,6 +29,8 @@ std::string run_postproc_stat(const std::string postproc_stat, const std::string
 
 std::string run_get_output(const std::string get_output, const std::string data);
 
+std::string run_gather_alya_output(const std::string get_alya_output, const int& run_id);
+
 int parse_configfile(const std::string& config_file_name,
 	std::string& nastin_dat,
 	std::string& solidz_dat,
@@ -46,6 +48,7 @@ int parse_configfile(const std::string& config_file_name,
 	std::string& postproc_stat_sc,
 	std::string& insert_nastin_exec,
 	std::string& insert_solidz_exec,
+	std::string& gather_alya_output,
 	unsigned int& uq_method,
 	unsigned int& pdf,
 	unsigned int& nsamples,

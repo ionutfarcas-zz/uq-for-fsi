@@ -7,13 +7,12 @@
 from os import rename, remove
 from sys import argv, exit, stdout
 from traceback import print_exc
-import matplotlib.pyplot as plt
 import numpy as np
 
 newline = str('\n')
 
-# get qoi
-def gather_qoi():
+# postprocessing stochastic collocations
+def postprocessing_sc():
 
 	displacement_x = []
 	forces0 = []
@@ -72,24 +71,7 @@ def gather_qoi():
 
 		input_file.close()
 		output_file.close()
-
-		plt.close('all')
-
-		f, axarr = plt.subplots(3)
-
-		axarr[0].plot(displacement_x, 'r--')
-		axarr[0].set_title('Displacement on the x axis')
-		axarr[1].plot(forces0, 'g--')
-		axarr[1].set_title('Force 0')
-		axarr[2].plot(forces1, 'b--')
-		axarr[2].set_title('Force 1')
-
-		plt.grid(True)
-
-		plt.show()
-
-		f.savefig("../tools/postprocessing/results/scsim.png")
-				
+		
 	except IOError:
 		print_exc(file = stdout)
 		exit(0)
@@ -97,12 +79,12 @@ def gather_qoi():
 if __name__ == "__main__":
 
 	if len(argv) != 3:
-		print "Error in processing_stat!"
+		print "Error in " + argv[0] + "!"
 		print "Usage: " + argv[0] + " datafile statistics_file"
 		exit(0)
 
 	datafile = argv[1]
 	statistics = argv[2]
 
-	gather_qoi()
+	postprocessing_sc()
 
