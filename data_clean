@@ -1,19 +1,19 @@
 #!/bin/bash
 
 if [ "$(ls -A data_results/MCS)" ]; then
-	rm -i data_results/MCS/*
+	rm data_results/MCS/*
 else
 	echo "data_results/MCS/ is alread empty!"
 fi
 
 if [ "$(ls -A data_results/SCS)" ]; then
-	rm -i data_results/SCS/*
+	rm data_results/SCS/*
 else
 	echo "data_results/SCS/ is alread empty!"
 fi
 
 if [ "$(ls -A ../alya_output/)" ]; then
-	rm -r -i ../alya_output/*
+	rm -r ../alya_output/*
 else
 	echo "../alya_output/ is alread empty!"
 fi

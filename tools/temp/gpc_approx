@@ -1,0 +1,105 @@
+#!/usr/bin/env python
+
+from traceback import print_exc
+from sys import argv, exit, stdout
+from numpy import random, array
+from matplotlib.pyplot import *
+
+def hermite_poly(deg, var):
+	try:
+		poly_val = 0.0
+
+		if deg == 0:
+			poly_val = 1.0
+		elif deg == 1:
+			poly_val = var
+		else:
+			poly_val = var*hermite_poly(deg - 1, var) - (deg - 1)*hermite_poly(deg - 2, var) 
+
+		return poly_val
+	except:
+		print_exc(file = stdout)
+		exit(0)
+
+def _1d_gpc_approx(coeffs, var, size):
+	gpc_approx = []
+
+	try:
+		trunc_size = len(coeffs)
+
+		for i in range(size):
+			approx = 0.0
+
+			for j in range(trunc_size):
+				approx += coeffs[j]*hermite_poly(j, var[i])
+
+			gpc_approx.append(approx)
+
+		gpc_approx = array(gpc_approx, dtype='float')
+		return gpc_approx
+
+	except:
+		print_exc(file = stdout)
+		exit(0)
+
+def get_coeffs(coeffs_file):
+	displacement_x = []
+	forces0 = []
+	forces1 = []
+
+	try:
+		with open(coeffs_file, 'r') as input_file:
+
+			for line in input_file:
+				read_line = line.split()
+
+				displacement_x.append(read_line[0])
+				forces0.append(read_line[1])
+				forces1.append(read_line[2])
+
+		displacement_x = array(displacement_x, dtype='float')
+		forces0 = array(forces0, dtype='float')
+		forces1 = array(forces1, dtype='float')
+
+		input_file.close()
+
+		return displacement_x, forces0, forces1
+
+	except IOError:
+		print_exc(file = stdout)
+		exit(0)
+
+if __name__ == "__main__":
+
+	if len(argv) != 5:
+		print "Error in " + argv[0] + "!"
+		print "Usage: " + argv[0] + " coeffs_file mean stddev no_rand_vars"
+		exit(0)
+	
+	coeffs_file = argv[1]
+	m = float(argv[2])
+	s = float(argv[3])
+	no_rand_vars = int(argv[4]);
+
+	coeff_disp_x, coeff_f0, coeff_f1 = get_coeffs(coeffs_file)
+	rand_vars = random.normal(m, s, no_rand_vars)
+	
+	approx_disp_x = _1d_gpc_approx(coeff_disp_x, rand_vars, no_rand_vars)
+	approx_forces0 = _1d_gpc_approx(coeff_f0, rand_vars, no_rand_vars)
+	approx_forces1 = _1d_gpc_approx(coeff_f1, rand_vars, no_rand_vars)
+
+	f, axarr = subplots(3)
+
+	axarr[0].plot(approx_disp_x)
+	axarr[0].set_title('gPC approximation of x displacement')
+	axarr[0].grid()
+
+	axarr[1].plot(approx_forces0)
+	axarr[1].set_title('gPC approximation of forces 0')
+	axarr[1].grid()
+
+	axarr[2].plot(approx_forces1)
+	axarr[2].set_title('gPC approximation of forces 1')
+	axarr[2].grid()
+
+	show()
