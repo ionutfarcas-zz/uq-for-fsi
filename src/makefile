@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -Werror -O2
+CFLAGS = -Wall -Werror -O3
 LIBS = -lm
 
 LIBUQ = libuq.a
@@ -9,16 +9,18 @@ ARFLAGS = rv
 SRCS = main.cpp helper.cpp
 OBJS =  $(addsuffix .o, $(basename $(SRCS)))
 
-all: UQ
+TARGET = UQ_onedim
+
+all: $(TARGET)
 	
 %.o: %.cpp $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-UQ: main.cpp helper.cpp $(LIBUQ)
+$(TARGET): main.cpp helper.cpp $(LIBUQ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
 
 $(LIBUQ) : $(OBJS)
 	$(AR) $(ARFLAGS) $@ $+
 
 clean:
-	rm -rf *.o UQ $(LIBUQ)
+	rm -rf *.o $(TARGET) $(LIBUQ)

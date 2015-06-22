@@ -12,27 +12,6 @@ private:
 	int ncoeff;
 	int nprocs;
 	int quad_degree;
-	double mean;
-	double std_dev;
-	double rho_f_p1;
-	double rho_f_p2;
-	double nu_f_p1;
-	double nu_f_p2;
-	double rho_s_p1;
-	double rho_s_p2;
-	std::string nastin_dat;
-	std::string solidz_dat;
-	std::string run_exec;
-	std::string output_data;
-	std::string gather_data_exec_sc;
-	std::string get_output_sc;
-	std::string postproc_stat_exec_sc;
-	std::string output_file_sc;
-	std::string coeff_sc;
-	std::string postproc_stat_sc;
-	std::string insert_nastin_exec;
-	std::string insert_solidz_exec;
-	std::string gather_alya_output;
 
 	GaussLegendreQuadrature glq;
 

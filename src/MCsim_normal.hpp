@@ -13,23 +13,6 @@ private:
 	int rank;
 	double mean;
 	double std_dev;
-	double rho_f_p1;
-	double rho_f_p2;
-	double nu_f_p1;
-	double nu_f_p2;
-	double rho_s_p1;
-	double rho_s_p2;
-	std::string nastin_dat;
-	std::string solidz_dat;
-	std::string run_exec;
-	std::string output_data;
-	std::string gather_data_exec_mc;
-	std::string postproc_stat_exec_mc;
-	std::string postproc_file_all_mc;
-	std::string postproc_stat_mc;
-	std::string insert_nastin_exec;
-	std::string insert_solidz_exec;
-	std::string gather_alya_output;
 
 	NormalRandomVariable nrv;
 
@@ -67,6 +50,9 @@ public:
 		const double& _rho_s_p1, 
 		const double& _rho_s_p2) 
 	{
+		mean = 0.0;
+		std_dev = 1.0;
+		
 		nastin_dat = _nastin_dat;
 		solidz_dat = _solidz_dat;
 		run_exec = _run_exec;
