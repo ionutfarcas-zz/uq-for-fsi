@@ -8,9 +8,10 @@
 #include <sstream>
 #include <cmath>
 #include <cassert>
-//#include <mpi.h>
+#include <ctime>
 #include <cstdlib>
 #include <vector>
+#include <chrono>
 
 std::string run_insert_nastin_2d(const std::string nastin_exec, const std::string nastin_data, 
 	double& new_density, double& new_viscosity);

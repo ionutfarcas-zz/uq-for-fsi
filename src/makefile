@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -Werror -O3
+CFLAGS = -Wall -Werror -O3 -std=c++11
 LIBS = -lm
 
 LIBUQ = libuq.a

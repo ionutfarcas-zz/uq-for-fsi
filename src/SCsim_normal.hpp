@@ -190,9 +190,9 @@ public:
 				temp_force1 += force1_all[i]*ghq.orthogonal_poly(j, sqrt(2)*pre_proc_result[i]) * pre_proc_result[quad_degree + i]/sqrt(M_PI);
 			}
 
-			temp_disp_x = temp_disp_x/ghq.norm_factor(j);
-			temp_force0 = temp_force0/ghq.norm_factor(j);
-			temp_force1 = temp_force1/ghq.norm_factor(j);
+			temp_disp_x = temp_disp_x/sqrt(ghq.norm_factor(j));
+			temp_force0 = temp_force0/sqrt(ghq.norm_factor(j));
+			temp_force1 = temp_force1/sqrt(ghq.norm_factor(j));
 
 			save_coeff_ok = save_coeff(coeff_sc, temp_disp_x, temp_force0, temp_force1);
 			assert(save_coeff_ok == 1);		

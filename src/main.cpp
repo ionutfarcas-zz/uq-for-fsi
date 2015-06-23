@@ -39,6 +39,8 @@ int main(int argc, char** argv)
 
     std::vector<double> pre_proc_results;
 
+    auto t1 = std::chrono::high_resolution_clock::now();
+
     if(parse_configfile(
         config_file_name.c_str(), 
         nastin_dat, 
@@ -187,6 +189,12 @@ int main(int argc, char** argv)
         std::cout << "Unknown combitation; Please try again!" << std::endl;
         std::cout << "uq method: 0 -> monte carlo, 1 -> stochastic collocations, pdf: 0 -> normal, 1 -> uniform" << std::endl;
     }
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::cout << "The simulation took "
+              << std::chrono::duration_cast<std::chrono::seconds>(t2-t1).count()
+              << " seconds\n";
 
     return 0;
 }
