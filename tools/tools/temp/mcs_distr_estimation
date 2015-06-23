@@ -1,0 +1,95 @@
+#!/usr/bin/env python
+
+from traceback import print_exc
+from sys import argv, exit, stdout
+from numpy import array, linspace
+from matplotlib.pyplot import *
+from pylab import plot, show, hist
+from scipy.stats.kde import gaussian_kde
+
+def get_qois(data_file):
+	disp_x = 0.
+	force0 = 0.
+	force1 = 0.
+
+	displacement_x = []
+	forces0 = []
+	forces1 = []
+
+	try:
+		with open(data_file, 'r') as input_file:
+
+			for line in input_file:
+					if line.startswith("DATA") or line.startswith("Time"):
+						continue
+					else:
+						line_tokens = line.split()
+						disp_x = line_tokens[3]
+						force0 = line_tokens[7]
+						force1 = line_tokens[8]
+
+						displacement_x.append(disp_x)
+						forces0.append(force0)
+						forces1.append(force1)
+
+		displacement_x = array(displacement_x, dtype='float')
+		forces0 = array(forces0, dtype='float')
+		forces1 = array(forces1, dtype='float')
+
+		input_file.close()
+
+	except IOError:
+		print_exc(file = stdout)
+		exit(0)
+
+	return displacement_x, forces0, forces1
+
+
+if __name__ == "__main__":
+
+	if len(argv) != 2:
+		print "Error in " + argv[0] + "!"
+		print "Usage: " + argv[0] + " datafile"
+		exit(0)
+
+	datafile = argv[1]
+
+	displacement_x, forces0, forces1 = get_qois(datafile)
+	size = len(displacement_x)
+
+	disp_x_pdf = gaussian_kde(displacement_x)
+	forces0_pdf = gaussian_kde(forces0)
+	forces1_pdf = gaussian_kde(forces1)
+
+	x_disp_x = linspace(min(displacement_x), max(displacement_x), size)
+	x_forces0 = linspace(min(forces0), max(forces0), size)
+	x_forces1 = linspace(min(forces1), max(forces1), size)
+
+	f, axarr = subplots(3)
+
+	axarr[0].hist(displacement_x, normed=1, alpha=.3, label="histogram") # histogram
+	axarr[0].plot(x_disp_x, disp_x_pdf(x_disp_x), 'r', label="approximated pdf") # distribution function
+	axarr[0].set_title('pdf approximation of x displacement using KDE')
+	axarr[0].autoscale(enable=True, axis=u'both', tight=True)
+	axarr[0].legend(loc="upper right", fancybox=True)
+	axarr[0].grid()
+
+	axarr[1].hist(forces0, normed=0, alpha=.3, label="histogram") # histogram
+	axarr[1].plot(x_forces0, forces0_pdf(x_forces0), 'r', label="approximated pdf") # distribution function
+	axarr[1].set_title('pdf approximation of force 0 using KDE')
+	axarr[1].autoscale(enable=True, axis=u'both', tight=True)
+	axarr[1].legend(loc="upper right", fancybox=True)
+	axarr[1].grid()
+
+	axarr[2].hist(forces1, normed=1, alpha=.3, label="histogram") # histogram
+	axarr[2].plot(x_forces1, forces1_pdf(x_forces1), 'r', label="approximated pdf") # distribution function
+	axarr[2].set_title('pdf approximation of forces1 using KDE')
+	axarr[2].autoscale(enable=True, axis=u'both', tight=True)
+	axarr[2].legend(loc="upper right", fancybox=True)
+	axarr[2].grid()	
+
+	show()
+
+	f.savefig('MCS_pdf_estimation.png')
+
+

@@ -1,0 +1,49 @@
+#!/usr/bin/env python
+
+# script used for getting the output for each interation in stochastic collocations method
+# the output is written in datafile that will be accesed from the main program
+
+from os import rename, remove
+from sys import argv, exit, stdout
+from traceback import print_exc
+
+newline = str('\n')
+onespace = str(' ')
+
+# get output
+def gather_output():
+
+	disp_x = 0.0;
+	force0 = 0.0;
+	force1 = 0.0;
+
+	try:
+		with open(datafile, 'r') as input_file:
+
+				for line in input_file:
+					if line.startswith("DATA") or line.startswith("Time"):
+						continue
+					else:
+						line_tokens = line.split()
+						disp_x = line_tokens[3]
+						force0 = line_tokens[7]
+						force1 = line_tokens[8]
+		
+	except IOError:
+		print_exc(file = stdout)
+		exit(0)
+
+	return disp_x, force0, force1
+
+if __name__ == "__main__":
+
+	if len(argv) != 2:
+		print "Error in " + argv[0] + "!"
+		print "Usage: " + argv[0] + " datafile"
+		exit(0)
+
+	datafile = argv[1]
+
+	disp_x, force0, force1 = gather_output()
+	stdout.write(str(disp_x) + ' ' + str(force0) + ' ' + str(force1))
+
