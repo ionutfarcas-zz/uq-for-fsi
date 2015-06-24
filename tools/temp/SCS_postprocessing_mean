@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+
+from sys import argv, exit
+from shutil import copytree, Error
+
+def get_mean(src, dest):
+    try:
+        copytree(src, dest)
+    
+    except Error as e:
+        print('Directory not copied. Error: %s' % e)
+    
+    except OSError as e:
+        print('Directory not copied. Error: %s' % e)
+
+if __name__=="__main__":
+
+	if len(argv) != 3:
+		print "Error in " + argv[0] + "!"
+		print "Usage: " + argv[0] + " folder_name_coeff_0 folder_name_mean"
+		exit(0)
+
+	folder_name_coeff_0 =  argv[1]
+	folder_name_mean = argv[2]
+
+	get_mean(folder_name_coeff_0, folder_name_mean)
+
+
+

@@ -12,20 +12,21 @@ back_path = "../../"
 
 # take all datafile from given path (i.e. nastin_x or solidz_x, where x = 1 ... no_of_simulation)
 # also, take file numbers in ascending order
-def import_datafiles(no_of_simulations, base_path, files_type):
+def import_datafiles(no_of_coefficients, base_path, files_type):
 	files = []
 	files_all = []
 	files_no = []
 
 	try:
-		for i in range(no_of_simulations):
-			files_path = base_path + str(i + 1)
-			files_paths.append(files_path)
+		for i in range(no_of_coefficients):
+			if i != 0:
+				files_path = base_path + str(i)
+				files_paths.append(files_path)
 
-			files = [ f for f in listdir(files_path) if f.startswith(files_type) ]
-			files.sort()
-			files_all.append(files_path)
-			files_all.append(files)
+				files = [ f for f in listdir(files_path) if f.startswith(files_type) ]
+				files.sort()
+				files_all.append(files_path)
+				files_all.append(files)
 
 		for _file in files:
 			file_no = sub(files_type, '', _file)
@@ -39,7 +40,7 @@ def import_datafiles(no_of_simulations, base_path, files_type):
 
 # take all same files from all simulations; e.g. all files A.bb from all simulations
 # return a list containing each file location + its name
-def get_same_files(no_of_simulations, all_files, files_type, files_no, dim):
+def get_same_files(no_of_coefficients, all_files, files_type, files_no, dim):
 	all_same_files = []
 
 	try:
@@ -70,7 +71,7 @@ def get_same_files(no_of_simulations, all_files, files_type, files_no, dim):
 
 # compute mean for all same files, i.e. from 1 to files_no, compute mean 
 # and return into into a file with the same name
-def get_mean(all_same_files, out_path):
+def get_stddev(all_same_files, out_path):
 
 	try:
 		if not exists(out_path):
@@ -78,16 +79,13 @@ def get_mean(all_same_files, out_path):
 
 		for files in all_same_files:
 			length = len(files)
-
-			# data = []
+		
 			data_one_file_type = []
 			data_out = []
 			out_file = None
 
-			size_one_file_type = length/2
-
 			for i in range(length):
-				# is it is a path
+				# if it is a path
 				if i%2 == 0:
 					for path in files_paths:
 						if files[i] == path:
@@ -116,23 +114,29 @@ def get_mean(all_same_files, out_path):
 
 					# put all data in a list and compute the mean
 					data_one_file_type.append(data)
-					
-			data_out = [sum(item)/size_one_file_type for item in zip(*data_one_file_type)]
+			
+			for coeff in zip(*data_one_file_type):
+				std_dev = 0.
 
+				for c in coeff:
+					std_dev += c**2
+
+				data_out.append(std_dev)
+		
 			# create output file with the same name as all same input files	
 			out_file = files[1]
 
 			# write data to file line by line
 			chdir(out_path)
-			with open(out_file, 'w') as mean_file:
+			with open(out_file, 'w') as stddev_file:
 				for item in files_header:
-					mean_file.write(str(item))
+					stddev_file.write(str(item))
 				for item in data_out:
-					mean_file.write(str(item) + '\n')
-			
-			mean_file.close()
+					stddev_file.write(str(item) + '\n')
 
+			stddev_file.close()
 			chdir(back_path)
+
 	except:
 		print_exc(file = stdout)
 		exit(0)
@@ -141,17 +145,17 @@ if __name__=="__main__":
 
 	if len(argv) != 5:
 		print "Error in " + argv[0] + "!"
-		print "Usage: " + argv[0] + " data_path files_type out_path no_of_simulations"
+		print "Usage: " + argv[0] + " data_path files_type stddev_path no_of_coefficients"
 		exit(0)
 
 	path =  argv[1]
 	files_type = argv[2]
 	out_path = argv[3]
-	no_of_simulations = int(argv[4])
+	no_of_coefficients = int(argv[4])
 
 	# call all functions so that in the end to compute the mean
-	all_filess, files_no = import_datafiles(no_of_simulations, path, files_type)
+	all_filess, files_no = import_datafiles(no_of_coefficients, path, files_type)
 	dim = len(files_no)
 
-	all_same_files =  get_same_files(no_of_simulations, all_filess, files_type, files_no, dim);
-	get_mean(all_same_files, out_path)
+	all_same_files =  get_same_files(no_of_coefficients, all_filess, files_type, files_no, dim)
+	get_stddev(all_same_files, out_path)
