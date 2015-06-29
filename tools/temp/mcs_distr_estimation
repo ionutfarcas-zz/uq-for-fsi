@@ -2,11 +2,13 @@
 
 from traceback import print_exc
 from sys import argv, exit, stdout
-from numpy import array, linspace
+from numpy import array, linspace, mean
 from matplotlib.pyplot import *
 from pylab import plot, show, hist
-from scipy.stats.kde import gaussian_kde
+from scipy.stats import norm, lognorm, chi2, t
+from statsmodels.api import qqplot, nonparametric
 
+# used to get data values of interest from the main program output files
 def get_qois(data_file):
 	disp_x = 0.
 	force0 = 0.
@@ -20,17 +22,17 @@ def get_qois(data_file):
 		with open(data_file, 'r') as input_file:
 
 			for line in input_file:
-					if line.startswith("DATA") or line.startswith("Time"):
-						continue
-					else:
-						line_tokens = line.split()
-						disp_x = line_tokens[3]
-						force0 = line_tokens[7]
-						force1 = line_tokens[8]
+				if line.startswith("DATA") or line.startswith("Time"):
+					continue
+				else:
+					line_tokens = line.split()
+					disp_x = line_tokens[3]
+					force0 = line_tokens[7]
+					force1 = line_tokens[8]
 
-						displacement_x.append(disp_x)
-						forces0.append(force0)
-						forces1.append(force1)
+					displacement_x.append(disp_x)
+					forces0.append(force0)
+					forces1.append(force1)
 
 		displacement_x = array(displacement_x, dtype='float')
 		forces0 = array(forces0, dtype='float')
@@ -47,49 +49,99 @@ def get_qois(data_file):
 
 if __name__ == "__main__":
 
-	if len(argv) != 2:
+	if len(argv) != 3:
 		print "Error in " + argv[0] + "!"
-		print "Usage: " + argv[0] + " datafile"
+		print "Usage: " + argv[0] + " datafile + qq_distr"
 		exit(0)
 
 	datafile = argv[1]
+	qq_distr = argv[2]
 
+	# take data values of interest
 	displacement_x, forces0, forces1 = get_qois(datafile)
-	size = len(displacement_x)
+	no_rand_vars = len(displacement_x)
+	
+	disp_x_pdf = nonparametric.KDEUnivariate(displacement_x)
+	disp_x_pdf.fit(kernel="gau")
+	forces0_pdf = nonparametric.KDEUnivariate(forces0)
+	forces0_pdf.fit(kernel="gau")
+	forces1_pdf = nonparametric.KDEUnivariate(forces1)
+	forces1_pdf.fit(kernel="gau")
 
-	disp_x_pdf = gaussian_kde(displacement_x)
-	forces0_pdf = gaussian_kde(forces0)
-	forces1_pdf = gaussian_kde(forces1)
+	# plot results: histogram, kde estimation, qqplot
 
-	x_disp_x = linspace(min(displacement_x), max(displacement_x), size)
-	x_forces0 = linspace(min(forces0), max(forces0), size)
-	x_forces1 = linspace(min(forces1), max(forces1), size)
+	# histogram
+	f1, axarr1 = subplots(3)
 
-	f, axarr = subplots(3)
+	axarr1[0].hist(displacement_x, normed=0, alpha=.3, label="x displacement") # histogram
+	axarr1[0].set_title('histogram of x displacement using KDE')
+	axarr1[0].autoscale(enable=True, axis=u'both', tight=True)
+	axarr1[0].legend(loc="upper right", fancybox=True)
+	axarr1[0].grid()
 
-	axarr[0].hist(displacement_x, normed=1, alpha=.3, label="histogram") # histogram
-	axarr[0].plot(x_disp_x, disp_x_pdf(x_disp_x), 'r', label="approximated pdf") # distribution function
-	axarr[0].set_title('pdf approximation of x displacement using KDE')
-	axarr[0].autoscale(enable=True, axis=u'both', tight=True)
-	axarr[0].legend(loc="upper right", fancybox=True)
-	axarr[0].grid()
+	axarr1[1].hist(forces0, normed=0, alpha=.3, label="force x") # histogram
+	axarr1[1].set_title('histogram of force 0 using KDE')
+	axarr1[1].autoscale(enable=True, axis=u'both', tight=True)
+	axarr1[1].legend(loc="upper right", fancybox=True)
+	axarr1[1].grid()
 
-	axarr[1].hist(forces0, normed=0, alpha=.3, label="histogram") # histogram
-	axarr[1].plot(x_forces0, forces0_pdf(x_forces0), 'r', label="approximated pdf") # distribution function
-	axarr[1].set_title('pdf approximation of force 0 using KDE')
-	axarr[1].autoscale(enable=True, axis=u'both', tight=True)
-	axarr[1].legend(loc="upper right", fancybox=True)
-	axarr[1].grid()
-
-	axarr[2].hist(forces1, normed=1, alpha=.3, label="histogram") # histogram
-	axarr[2].plot(x_forces1, forces1_pdf(x_forces1), 'r', label="approximated pdf") # distribution function
-	axarr[2].set_title('pdf approximation of forces1 using KDE')
-	axarr[2].autoscale(enable=True, axis=u'both', tight=True)
-	axarr[2].legend(loc="upper right", fancybox=True)
-	axarr[2].grid()	
+	axarr1[2].hist(forces1, normed=0, alpha=.3, label="force y") # histogram
+	axarr1[2].set_title('histogram of forces1 using KDE')
+	axarr1[2].autoscale(enable=True, axis=u'both', tight=True)
+	axarr1[2].legend(loc="upper right", fancybox=True)
+	axarr1[2].grid()	
 
 	show()
+	fig1_name = 'SCS_histogram_' + str(no_rand_vars) + '.png'
+	f1.savefig(fig1_name)
 
-	f.savefig('MCS_pdf_estimation.png')
+	figure
+
+	# kde estimation
+	f2, axarr2 = subplots(3)
+
+	axarr2[0].plot(disp_x_pdf.support, disp_x_pdf.density, 'r', label="pdf x displacement") # distribution function
+	axarr2[0].set_title('pdf approximation of x displacement using KDE')
+	axarr2[0].autoscale(enable=True, axis=u'both', tight=True)
+	axarr2[0].legend(loc="upper right", fancybox=True)
+	axarr2[0].grid()
+
+	axarr2[1].plot(forces0_pdf.support, forces0_pdf.density, 'r', label="pdf force x") # distribution function
+	axarr2[1].set_title('pdf approximation of force 0 using KDE')
+	axarr2[1].autoscale(enable=True, axis=u'both', tight=True)
+	axarr2[1].legend(loc="upper right", fancybox=True)
+	axarr2[1].grid()
+
+	axarr2[2].plot(forces1_pdf.support, forces1_pdf.density, 'r', label="pdf force y") # distribution function
+	axarr2[2].set_title('pdf approximation of forces1 using KDE')
+	axarr2[2].autoscale(enable=True, axis=u'both', tight=True)
+	axarr2[2].legend(loc="upper right", fancybox=True)
+	axarr2[2].grid()	
+
+	show()
+	fig2_name = 'MCS_pdf_estimation_' + str(no_rand_vars) + '.png'
+	f2.savefig(fig2_name)
+
+	fig3 = figure
+
+	# qq plot
+	f3, axarr3 = subplots(3)
+
+	suptitle_name = 'QQ plot of KDE approximated PDF using ' +  str(qq_distr) + ' distribution'
+	suptitle(suptitle_name)
+
+	qqplot(disp_x_pdf.density, qq_distr, line = '45', fit = True, ax = axarr3[0])
+	axarr3[0].grid()
+
+	qqplot(forces0_pdf.density, qq_distr, line = '45', fit = True, ax = axarr3[1])
+	axarr3[1].grid()
+
+	qqplot(forces1_pdf.density, qq_distr, line = '45', fit = True, ax = axarr3[2])
+	axarr3[2].grid()
+
+	show()
+	f3.savefig('MCS_qq_plot.png')
+
+
 
 
