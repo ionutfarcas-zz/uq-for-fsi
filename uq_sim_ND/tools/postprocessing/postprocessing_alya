@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ $# -eq 1 ]; then 
+	mkdir ../../alya_output/nastin_$1
+	cp -r ../../nastin/*.post.* ../../alya_output/nastin_$1
+	mkdir ../../alya_output/solidz_$1
+	cp -r ../../solidz/*.post.* ../../alya_output/solidz_$1
+else
+	echo "Error when using $0!"
+	echo "Correct usage: $0 simulation_no"
+fi
+

@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+
+# script used for getting the quantities of interest (qoi) out of the collective 
+# datafile and plot them; for the current setting, the qoi are the displacement
+# on the x axis and force 0 and force 1
+
+from os import rename, remove
+from sys import argv, exit, stdout
+from traceback import print_exc
+import numpy as np
+
+newline = str('\n')
+
+# postprocessing monte carlo
+def postprocessing_mc():
+
+	displacement_x = []
+	forces0 = []
+	forces1 = []
+
+	m_disp_x = 0.
+	var_disp_x = 0.
+	m_f0_x = 0.
+	var_f0_x = 0.
+	m_f1_x = 0.
+	var_f1_x = 0.
+
+	try:
+		with open(datafile, 'r') as input_file:
+			with open(statistics, 'w') as output_file:
+
+				for line in input_file:
+					if line.startswith("DATA") or line.startswith("Time"):
+						continue
+					else:
+						line_tokens = line.split()
+
+						displacement_x.append(line_tokens[3])
+						forces0.append(line_tokens[7])
+						forces1.append(line_tokens[8])
+
+				displacement_x = np.array(displacement_x)
+				displacement_x = displacement_x.astype(np.float)
+				forces0 = np.array(forces0)
+				forces0 = forces0.astype(np.float)
+				forces1 = np.array(forces1)
+				forces1 = forces1.astype(np.float)
+
+				m_disp_x = np.mean(displacement_x)
+				var_disp_x = np.var(displacement_x)
+				m_f0 = np.mean(forces0)
+				var_f0 = np.var(forces0)
+				m_f1 = np.mean(forces1)
+				var_f1 = np.var(forces1)
+
+				stat = "The mean of the displacement on the x axis is: " + str(m_disp_x) + newline
+				output_file.write(stat)
+				stat = "The variance of the displacement on the x axis is: " + str(var_disp_x) + newline
+				output_file.write(stat)
+				output_file.write(newline)
+				
+				stat = "The mean of force 0 is:" + str(m_f0) + newline
+				output_file.write(stat)
+				stat = "The variance of force 0 is: " + str(var_f0) + newline
+				output_file.write(stat)
+				output_file.write(newline)
+
+				stat = "The mean of forces 1 is: " + str(m_f1) + newline
+				output_file.write(stat)
+				stat = "The variance of force 1 is: " + str(var_f1) + newline
+				output_file.write(stat)
+				output_file.write(newline)
+
+		input_file.close()
+		output_file.close()
+
+	except IOError:
+		print_exc(file = stdout)
+		exit(0)
+
+if __name__ == "__main__":
+
+	if len(argv) != 3:
+		print "Error in " + argv[0] + "!"
+		print "Usage: " + argv[0] + " datafile statistics_file"
+		exit(0)
+
+	datafile = argv[1]
+	statistics = argv[2]
+
+	postprocessing_mc()
+
