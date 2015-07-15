@@ -1,8 +1,0 @@
-#!/bin/bash
-
-cd ../
-cd ../nastin
-./Alya.g Flap &
-cd ../solidz
-./Alya.g Flap
-
