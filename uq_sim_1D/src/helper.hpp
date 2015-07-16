@@ -66,11 +66,4 @@ std::vector<double> get_output_data(const std::string get_output_sc);
 
 int save_coeff(const std::string file_name, const double& disp_x, const double& force0, const double& force1);
 
-void Simulation_Message(const std::string& txt);
-
-void Simulation_Sync(const std::string& txt);
-
-void Simulation_Stop(const std::string& txt);
-
-
 #endif /* HELPER_HPP_ */

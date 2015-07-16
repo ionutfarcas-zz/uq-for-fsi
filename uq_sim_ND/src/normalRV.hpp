@@ -6,21 +6,20 @@
 class NormalRandomVariable : public RandomNumberGenerator
 {
 private:
-	boost::mt19937 rng;
-	boost::normal_distribution<> normal_distr;
-	boost::variate_generator<boost::mt19937&, boost::normal_distribution<> >* var_normal;
+	std::random_device dev;
+	std::mt19937* rng;
+	std::normal_distribution<double>* var_normal;
 
 public:
 	NormalRandomVariable()
 	{
-		rng = boost::mt19937();
-		normal_distr = boost::normal_distribution<>(0.0, 1.0);
-		var_normal = new boost::variate_generator<boost::mt19937&, boost::normal_distribution<> >(rng, normal_distr);
+		rng = new std::mt19937(dev());
+		var_normal = new std::normal_distribution<double>(0.0, 1.0);
 	}
 
 	virtual double get_rn() const
 	{
-		return (*var_normal)();
+		return (*var_normal)(*rng);
 	}
 
 	virtual std::vector<double> get_samples(const double& x, const double& y, const int& nsamples) const
@@ -39,8 +38,11 @@ public:
 
 	~NormalRandomVariable()
 	{
-		if(var_normal != 0)
-			delete var_normal;
+		delete rng;
+		rng = nullptr;
+
+		delete var_normal;
+		var_normal = nullptr;
 	}
 };
 

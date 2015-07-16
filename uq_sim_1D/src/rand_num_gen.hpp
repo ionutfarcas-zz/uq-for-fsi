@@ -2,13 +2,9 @@
 #define RANDNUMGEN_HPP_
 
 #include <iostream>
+#include <random>
 #include <vector>
 #include <cmath>
-#include <ctime>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/normal_distribution.hpp>
-#include <boost/random/uniform_real.hpp>
-#include <boost/random/variate_generator.hpp>
 
 class RandomNumberGenerator
 {

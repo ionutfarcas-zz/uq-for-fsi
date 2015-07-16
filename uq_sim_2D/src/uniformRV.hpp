@@ -6,21 +6,20 @@
 class UniformRandomVariable : public RandomNumberGenerator
 {
 private:
-	boost::mt19937 rng;
-	boost::uniform_real<> uniform_distr;
-	boost::variate_generator<boost::mt19937&, boost::uniform_real<> >* var_uniform;
+	std::random_device dev;
+	std::mt19937* rng;
+	std::uniform_real_distribution<double>* var_uniform;
 
 public:
 	UniformRandomVariable()
 	{
-		rng = boost::mt19937();
-		uniform_distr = boost::uniform_real<>(-1.0, 1.0);
-		var_uniform = new boost::variate_generator<boost::mt19937&, boost::uniform_real<> >(rng, uniform_distr);	
+		rng = new std::mt19937(dev());
+		var_uniform = new std::uniform_real_distribution<double>(0.0, 1.0);
 	}
 
 	virtual double get_rn() const
 	{
-		return (*var_uniform)();
+		return (*var_uniform)(*rng);
 	}
 
 	virtual std::vector<double> get_samples(const double& x, const double& y, const int& nsamples) const
@@ -39,8 +38,11 @@ public:
 
 	~UniformRandomVariable() 
 	{
-		if(var_uniform != 0)
-			delete var_uniform;
+		delete rng;
+		rng = nullptr;
+
+		delete var_uniform;
+		var_uniform = nullptr;
 	}
 };
 
