@@ -1,0 +1,39 @@
+#!/usr/bin/perl
+
+use autodie;
+use strict;
+use warnings qw(all);
+
+if ($#ARGV != 2 ) 
+{
+	print "Error!\nUsage: ./insert_params_nastin_2d FILE_NAME new_density new_visosity\n";
+	exit;
+}
+
+my $file = $ARGV[0];
+my $density = $ARGV[1];
+my $viscosity = $ARGV[2];
+
+my $density_line = 12;
+my $viscosity_line = 13;
+
+@ARGV = ($file);
+$^I = "";
+
+while (<>)
+{
+    if ($. == $density_line) 
+    {
+        my $line = "\t DENSITY= $density\n";
+        print $line;
+    }
+    elsif ($. == $viscosity_line) 
+    {
+        my $line = "\t VISCOSITY= $viscosity\n";
+        print $line;
+    }
+    else
+    {
+    	print;
+    }
+}

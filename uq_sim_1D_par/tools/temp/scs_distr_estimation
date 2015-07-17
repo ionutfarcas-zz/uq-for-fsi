@@ -1,0 +1,173 @@
+#!/usr/bin/env python
+
+from traceback import print_exc
+from sys import argv, exit, stdout
+from numpy import random, array, linspace
+from matplotlib.pyplot import *
+from pylab import plot, show, hist
+from scipy.stats import norm, lognorm, chi2, t
+from statsmodels.api import qqplot, nonparametric
+
+def hermite_poly(deg, var):
+	try:
+		poly_val = 0.0
+
+		if deg == 0:
+			poly_val = 1.0
+		elif deg == 1:
+			poly_val = var
+		else:
+			poly_val = var*hermite_poly(deg - 1, var) - (deg - 1)*hermite_poly(deg - 2, var) 
+
+		return poly_val
+	except:
+		print_exc(file = stdout)
+		exit(0)
+
+def _1d_gpc_approx(coeffs, var, size):
+	gpc_approx = []
+
+	try:
+		trunc_size = len(coeffs)
+
+		for i in range(size):
+			approx = 0.0
+
+			for j in range(trunc_size):
+				approx += coeffs[j]*hermite_poly(j, var[i])
+
+			gpc_approx.append(approx)
+
+		gpc_approx = array(gpc_approx, dtype='float')
+		return gpc_approx
+
+	except:
+		print_exc(file = stdout)
+		exit(0)
+
+def get_coeffs(coeffs_file):
+	displacement_x = []
+	forces0 = []
+	forces1 = []
+
+	try:
+		with open(coeffs_file, 'r') as input_file:
+
+			for line in input_file:
+				read_line = line.split()
+
+				displacement_x.append(read_line[0])
+				forces0.append(read_line[1])
+				forces1.append(read_line[2])
+
+		displacement_x = array(displacement_x, dtype='float')
+		forces0 = array(forces0, dtype='float')
+		forces1 = array(forces1, dtype='float')
+
+		input_file.close()
+
+		return displacement_x, forces0, forces1
+
+	except IOError:
+		print_exc(file = stdout)
+		exit(0)
+
+if __name__ == "__main__":
+
+	if len(argv) != 6:
+		print "Error in " + argv[0] + "!"
+		print "Usage: " + argv[0] + " coeffs_file mean stddev no_rand_vars qq_distr"
+		exit(0)
+	
+	coeffs_file = argv[1]
+	m = float(argv[2])
+	s = float(argv[3])
+	no_rand_vars = int(argv[4])
+	qq_distr = argv[5]
+
+	coeff_disp_x, coeff_f0, coeff_f1 = get_coeffs(coeffs_file)
+	rand_vars = random.normal(m, s, no_rand_vars)
+	
+	displacement_x = _1d_gpc_approx(coeff_disp_x, rand_vars, no_rand_vars)
+	forces0 = _1d_gpc_approx(coeff_f0, rand_vars, no_rand_vars)
+	forces1 = _1d_gpc_approx(coeff_f1, rand_vars, no_rand_vars)
+
+	disp_x_pdf = nonparametric.KDEUnivariate(displacement_x)
+	disp_x_pdf.fit(kernel="gau")
+	forces0_pdf = nonparametric.KDEUnivariate(forces0)
+	forces0_pdf.fit(kernel="gau")
+	forces1_pdf = nonparametric.KDEUnivariate(forces1)
+	forces1_pdf.fit(kernel="gau")
+
+	# plot results: histogram, kde estimation, qqplot
+
+	# histogram
+	f1, axarr1 = subplots(3)
+
+	axarr1[0].hist(displacement_x, normed=0, alpha=.3, label="x displacement") # histogram
+	axarr1[0].set_title('histogram of x displacement using KDE')
+	axarr1[0].autoscale(enable=True, axis=u'both', tight=True)
+	axarr1[0].legend(loc="upper right", fancybox=True)
+	axarr1[0].grid()
+
+	axarr1[1].hist(forces0, normed=0, alpha=.3, label="force x") # histogram
+	axarr1[1].set_title('histogram of force 0 using KDE')
+	axarr1[1].autoscale(enable=True, axis=u'both', tight=True)
+	axarr1[1].legend(loc="upper right", fancybox=True)
+	axarr1[1].grid()
+
+	axarr1[2].hist(forces1, normed=0, alpha=.3, label="force y") # histogram
+	axarr1[2].set_title('histogram of forces1 using KDE')
+	axarr1[2].autoscale(enable=True, axis=u'both', tight=True)
+	axarr1[2].legend(loc="upper right", fancybox=True)
+	axarr1[2].grid()	
+
+	show()
+	fig1_name = 'SCS_histogram_' + str(no_rand_vars) + '.png'
+	f1.savefig(fig1_name)
+
+	figure
+
+	f2, axarr2 = subplots(3)
+
+	axarr2[0].plot(disp_x_pdf.support, disp_x_pdf.density, 'r', label="pdf x displacement") # distribution function
+	axarr2[0].set_title('pdf approximation of x displacement using KDE')
+	axarr2[0].autoscale(enable=True, axis=u'both', tight=True)
+	axarr2[0].legend(loc="upper right", fancybox=True)
+	axarr2[0].grid()
+
+	axarr2[1].plot(forces0_pdf.support, forces0_pdf.density, 'r', label="pdf force x") # distribution function
+	axarr2[1].set_title('pdf approximation of force 0 using KDE')
+	axarr2[1].autoscale(enable=True, axis=u'both', tight=True)
+	axarr2[1].legend(loc="upper right", fancybox=True)
+	axarr2[1].grid()
+
+	axarr2[2].plot(forces1_pdf.support, forces1_pdf.density, 'r', label="pdf force y") # distribution function
+	axarr2[2].set_title('pdf approximation of forces1 using KDE')
+	axarr2[2].autoscale(enable=True, axis=u'both', tight=True)
+	axarr2[2].legend(loc="upper right", fancybox=True)
+	axarr2[2].grid()	
+
+	show()
+	fig2_name = 'SCS_pdf_estimation_' + str(no_rand_vars) + '.png'
+	f2.savefig(fig2_name)
+
+	fig3 = figure
+
+	# qq plot
+	f3, axarr3 = subplots(3)
+
+	suptitle_name = 'QQ plot of KDE approximated PDF using ' +  str(qq_distr) + ' distribution'
+	suptitle(suptitle_name)
+
+	qqplot(disp_x_pdf.density, qq_distr, line = '45', fit = True, ax = axarr3[0])
+	axarr3[0].grid()
+
+	qqplot(forces0_pdf.density, qq_distr, line = '45', fit = True, ax = axarr3[1])
+	axarr3[1].grid()
+
+	qqplot(forces1_pdf.density, qq_distr, line = '45', fit = True, ax = axarr3[2])
+	axarr3[2].grid()
+
+	show()
+	f3.savefig('SCS_qq_plot.png')

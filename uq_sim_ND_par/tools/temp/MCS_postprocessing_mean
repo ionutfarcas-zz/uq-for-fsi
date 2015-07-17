@@ -1,0 +1,157 @@
+#!/usr/bin/env python
+
+from sys import argv, exit, stdout
+from os import listdir, chdir, getcwd, makedirs
+from os.path import isfile, join, exists
+from re import sub
+from numpy import array, mean
+from traceback import print_exc
+
+files_paths = []
+back_path = "../../"
+
+# take all datafile from given path (i.e. nastin_x or solidz_x, where x = 1 ... no_of_simulation)
+# also, take file numbers in ascending order
+def import_datafiles(no_of_simulations, base_path, files_type):
+	files = []
+	files_all = []
+	files_no = []
+
+	try:
+		for i in range(no_of_simulations):
+			files_path = base_path + str(i + 1)
+			files_paths.append(files_path)
+
+			files = [ f for f in listdir(files_path) if f.startswith(files_type) ]
+			files.sort()
+			files_all.append(files_path)
+			files_all.append(files)
+
+		for _file in files:
+			file_no = sub(files_type, '', _file)
+			files_no.append(file_no)
+			files_no.sort()
+	except:
+		print_exc(file = stdout)
+		exit(0)
+
+	return files_all, files_no
+
+# take all same files from all simulations; e.g. all files A.bb from all simulations
+# return a list containing each file location + its name
+def get_same_files(no_of_simulations, all_files, files_type, files_no, dim):
+	all_same_files = []
+
+	try:
+		if dim != 0:
+			for i in range(dim):
+				list_of_same_files = 'data_file_' + str(i + 1)
+				list_of_same_files = []
+
+				for one_sim_files in all_files:
+
+					for path in files_paths:
+						if path == one_sim_files:
+							file_path = one_sim_files
+
+					for sim_files in one_sim_files:
+						file_name = files_type + files_no[i]
+
+						if sim_files == file_name:
+							list_of_same_files.append(file_path)
+							list_of_same_files.append(sim_files)
+
+				all_same_files.append(list_of_same_files)
+	except:
+		print_exc(file = stdout)
+		exit(0)
+
+	return all_same_files
+
+# compute mean for all same files, i.e. from 1 to files_no, compute mean 
+# and return into into a file with the same name
+def get_mean(all_same_files, out_path):
+
+	try:
+		if not exists(out_path):
+			makedirs(out_path)
+
+		for files in all_same_files:
+			length = len(files)
+
+			# data = []
+			data_one_file_type = []
+			data_out = []
+			out_file = None
+
+			size_one_file_type = length/2
+
+			for i in range(length):
+				# is it is a path
+				if i%2 == 0:
+					for path in files_paths:
+						if files[i] == path:
+							path_to_file = files[i]
+
+				#if it is a file
+				else:
+					data = []
+
+					chdir(path_to_file)
+					files_header = []
+
+					# open files and take all numerial values
+					with open(files[i], 'r') as data_file:
+						for line in data_file:
+							if line[1].isdigit() or line[2].isdigit():
+								data.append(line)
+							else:
+								files_header.append(line)
+					
+					# transform data into float
+					data = [float(item) for item in data]
+					
+					data_file.close()
+					chdir(back_path)
+
+					# put all data in a list and compute the mean
+					data_one_file_type.append(data)
+					
+			data_out = [sum(item)/size_one_file_type for item in zip(*data_one_file_type)]
+
+			# create output file with the same name as all same input files	
+			out_file = files[1]
+
+			# write data to file line by line
+			chdir(out_path)
+			with open(out_file, 'w') as mean_file:
+				for item in files_header:
+					mean_file.write(str(item))
+				for item in data_out:
+					mean_file.write(str(item) + '\n')
+			
+			mean_file.close()
+
+			chdir(back_path)
+	except:
+		print_exc(file = stdout)
+		exit(0)
+
+if __name__=="__main__":
+
+	if len(argv) != 5:
+		print "Error in " + argv[0] + "!"
+		print "Usage: " + argv[0] + " data_path files_type out_path no_of_simulations"
+		exit(0)
+
+	path =  argv[1]
+	files_type = argv[2]
+	out_path = argv[3]
+	no_of_simulations = int(argv[4])
+
+	# call all functions so that in the end to compute the mean
+	all_filess, files_no = import_datafiles(no_of_simulations, path, files_type)
+	dim = len(files_no)
+
+	all_same_files =  get_same_files(no_of_simulations, all_filess, files_type, files_no, dim);
+	get_mean(all_same_files, out_path)

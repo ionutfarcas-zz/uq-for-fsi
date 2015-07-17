@@ -1,0 +1,11 @@
+#!/bin/bash
+if [ $# -eq 1 ]; then
+	cd ../
+	cd ../nastin_$1
+	./Alya.g Flap &
+	cd ../solidz_$1
+	./Alya.g Flap
+else
+	echo "Error when using $0!"
+	echo "Correct usage: $0 rank"
+fi

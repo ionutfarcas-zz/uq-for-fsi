@@ -1,0 +1,21 @@
+#!/bin/bash
+
+if [ $# -eq 1 ]; 
+then
+	if [ -d "../../nastin_$1" ]; 
+	then 
+		rm -r ../../nastin_$1
+	fi
+	mkdir ../../nastin_$1
+	cp -r ../../nastin/* ../../nastin_$1
+
+	if [ -d "../../solidz_$1" ]; 
+	then
+		rm -r ../../solidz_$1
+	fi
+	mkdir ../../solidz_$1
+	cp -r ../../solidz/* ../../solidz_$1
+else
+	echo "Error when using $0!"
+	echo "Correct usage: $0 rank"
+fi
