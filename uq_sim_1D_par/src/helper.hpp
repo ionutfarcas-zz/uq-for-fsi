@@ -15,6 +15,8 @@
 
 #include <mpi.h>
 
+typedef std::vector<std::vector<double>> vec2d_double;
+
 std::string run_insert_nastin_2d(const std::string nastin_exec, std::string nastin_data, 
 	double& new_density, double& new_viscosity, int rank);
 
@@ -34,7 +36,7 @@ std::string run_postproc_stat(const std::string postproc_stat, std::string dataf
 
 std::vector<double> get_stat_mc(const std::string& get_sums, int& no_valid_lines);
 
-int write_stat_mc_to_file(
+int write_stat_to_file(
 	const std::string& stat_file_name, 
 	const double& mean_disp_x, 
 	const double& mean_forces_x, 
@@ -43,7 +45,12 @@ int write_stat_mc_to_file(
 	const double& stddev_forces_x, 
 	const double& stddev_forces_y);
 
-std::string run_get_output(const std::string get_output, const std::string data);
+std::string run_get_output(const std::string get_output, std::string data, int rank);
+
+int get_coeff_sc(const std::string& coeff_sc, 
+	std::vector<double>& disp_x, 
+	std::vector<double>& force0, 
+	std::vector<double>& force1);
 
 std::string run_gather_alya_output(const std::string get_alya_output, const int& run_id);
 
@@ -78,7 +85,7 @@ int parse_configfile(const std::string& config_file_name,
 	double& rho_s_p1,
 	double& rho_s_p2);
 
-std::vector<double> get_output_data(const std::string get_output_sc);
+vec2d_double get_output_data(const std::string get_output_sc, int& no_valid_lines);
 
 int save_coeff(const std::string file_name, const double& disp_x, const double& force0, const double& force1);
 

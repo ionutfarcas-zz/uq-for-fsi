@@ -6,16 +6,19 @@
 from os import rename, remove
 from sys import argv, exit, stdout
 from traceback import print_exc
+from os.path import isfile
 
-newline = str('\n')
-onespace = str(' ')
+newline = '\n'
+space = ' '
 
 # get output
-def gather_output():
+def gather_output(datafile):
 
-	disp_x = 0.0;
-	force0 = 0.0;
-	force1 = 0.0;
+	valid_lines = 0
+
+	disp_x = []
+	force0 = []
+	force1 = []
 
 	try:
 		with open(datafile, 'r') as input_file:
@@ -24,16 +27,18 @@ def gather_output():
 					if line.startswith("DATA") or line.startswith("Time"):
 						continue
 					else:
+						valid_lines += 1
 						line_tokens = line.split()
-						disp_x = line_tokens[3]
-						force0 = line_tokens[7]
-						force1 = line_tokens[8]
+
+						disp_x.append(line_tokens[3])
+						force0.append(line_tokens[7])
+						force1.append(line_tokens[8])
 		
 	except IOError:
 		print_exc(file = stdout)
 		exit(0)
 
-	return disp_x, force0, force1
+	return valid_lines, disp_x, force0, force1
 
 if __name__ == "__main__":
 
@@ -43,7 +48,12 @@ if __name__ == "__main__":
 		exit(0)
 
 	datafile = argv[1]
+	valid_lines = 0
 
-	disp_x, force0, force1 = gather_output()
-	stdout.write(str(disp_x) + ' ' + str(force0) + ' ' + str(force1))
+	if(isfile(datafile)):
+		valid_lines, disp_x, force0, force1 = gather_output(datafile)
+		for i in range(valid_lines):
+			stdout.write(str(i + 1) + space + str(disp_x[i]) + space + str(force0[i]) + space + str(force1[i]) + newline)
+	else:
+		stdout.write(str(0) + space + str(0) + space + str(0) + space + str(0) + newline)
 

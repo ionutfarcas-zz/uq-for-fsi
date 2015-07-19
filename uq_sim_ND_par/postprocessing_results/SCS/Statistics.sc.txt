@@ -1,9 +1,8 @@
-The mean of the displacement on the x axis is: 0.000203166
-The variance of the displacement on the x axis is: 2.61023590304e-10
+The mean of the displacement on the x axis is: 0.000207261
+The variance of the displacement on the x axis is: 2.66121e-10
 
-The mean of force 0 is:5.1681
-The variance of force 0 is: 0.221229484588
+The mean of force x is: 5.85792
+The variance of the force x  is: 0.486534
 
-The mean of forces 1 is: 8.082
-The variance of force 1 is: 0.0872603165165
-
+The mean of force y is: 8.42805
+The variance of the force y  is: 0.146119

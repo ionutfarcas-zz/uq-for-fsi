@@ -8,6 +8,7 @@
 from os import rename, remove
 from sys import argv, exit, stdout
 from traceback import print_exc
+from os.path import isfile
 
 newline = str('\n')
 
@@ -51,5 +52,6 @@ if __name__ == "__main__":
 	datafile_output = argv[2]
 	simulation_no = argv[3]
 
-	gather_data(simulation_no)
+	if(isfile(datafile)):
+		gather_data(simulation_no)
 

@@ -262,7 +262,7 @@ std::vector<double> get_stat_mc(const std::string& get_sums, int& no_valid_lines
 	return results;
 }
 
-int write_stat_mc_to_file(
+int write_stat_to_file(
 	const std::string& stat_file_name, 
 	const double& mean_disp_x, 
 	const double& mean_forces_x, 
@@ -295,12 +295,71 @@ int write_stat_mc_to_file(
   	return 0;
 }
 
-std::string run_get_output(const std::string get_output, const std::string data)
+std::string run_get_output(const std::string get_output, std::string data, int rank)
 {
+	std::string delimiter = "/";
+	std::string token;
+	std::string new_data;
+	std::string rank_insert = std::to_string(rank) + "_";
+	size_t pos = 0;
+
 	std::stringstream caller;
-	caller << get_output << " " << data;
+
+	while ((pos = data.find(delimiter)) != std::string::npos) 
+	{
+		token = data.substr(0, pos);
+		new_data += token;
+
+		new_data += delimiter;
+		data.erase(0, pos + delimiter.length());
+	}
+	new_data += rank_insert + data;
+
+	caller << get_output << " " << new_data;
 
 	return caller.str();
+}
+
+int get_coeff_sc(const std::string& coeff_sc, 
+	std::vector<double>& disp_x, 
+	std::vector<double>& force0, 
+	std::vector<double>& force1)
+{
+	std::ifstream coeff_file;
+
+	std::string line;
+	double disp_x_val = 0.0;
+	double force0_val = 0.0;
+	double force1_val = 0.0;
+	std::string disp_x_val_str;
+	std::string forces0_val_str;
+	std::string forces1_val_str;
+
+	coeff_file.open(coeff_sc.c_str(), std::ios::in);
+
+	if (!coeff_file.is_open())
+	{
+		std::cout << "Could not open coeff_file file!" << std::endl;
+		return 0;
+	}
+
+	while (std::getline(coeff_file, line))
+    {
+        std::stringstream oneline(line);
+
+        oneline >> disp_x_val_str >> forces0_val_str >> forces1_val_str;
+        disp_x_val = str_to_number<double>(disp_x_val_str);
+        force0_val = str_to_number<double>(forces0_val_str);
+        force1_val = str_to_number<double>(forces1_val_str);
+
+        disp_x.push_back(disp_x_val);
+        force0.push_back(force0_val);
+        force1.push_back(force1_val);
+    }
+
+    coeff_file.close();
+
+    return 1;
 }
 
 std::string run_gather_alya_output(const std::string get_alya_output, const int& run_id)
@@ -489,46 +548,53 @@ int parse_configfile(const std::string& config_file_name,
 	return 1;	
 }
 
-std::vector<double> get_output_data(const std::string get_output_sc) 
+vec2d_double get_output_data(const std::string get_output_sc, int& no_valid_lines)
 {
-    FILE* stream;
-    char buffer[256];
-    std::string disp_x_str;
-    std::string force0_str;
-    std::string force1_str;
-    double disp_x;
-    double force0;
-    double force1;
+	no_valid_lines = 0;
 
-    std::vector<double> data;
+	FILE* stream;
+	char buffer[256];
+	std::string no_valid_lines_str;
+	std::string disp_x_str;
+	std::string force0_str;
+	std::string force1_str;
+	double disp_x;
+	double force0;
+	double force1;
 
-    stream = popen(get_output_sc.c_str(), "r");
-    if (stream) 
-    {
-        while (!feof(stream))
-        {
-            if (fgets(buffer, sizeof(buffer), stream) != NULL)
-            {
-                std::stringstream temp(buffer);
-                temp >> disp_x_str >> force0_str >> force1_str;
-                
-                disp_x = str_to_number<double>(disp_x_str);
-                force0 = str_to_number<double>(force0_str);
-                force1 = str_to_number<double>(force1_str);
+	vec2d_double data_all;
 
-                data.push_back(disp_x);
-                data.push_back(force0);
-                data.push_back(force1);
-            }
-        }
-        pclose(stream);
-    }
-    else
-    {
-        throw "Error reading data file!"; 
-    }
+	stream = popen(get_output_sc.c_str(), "r");
+	if (stream) 
+	{
+		while (!feof(stream))
+		{
+			if (fgets(buffer, sizeof(buffer), stream) != NULL)
+			{
+				std::vector<double> data;
+				std::stringstream temp(buffer);
+				temp >> no_valid_lines_str >> disp_x_str >> force0_str >> force1_str;
 
-    return data;
+				no_valid_lines = str_to_number<int>(no_valid_lines_str);
+				disp_x = str_to_number<double>(disp_x_str);
+				force0 = str_to_number<double>(force0_str);
+				force1 = str_to_number<double>(force1_str);
+
+				data.push_back(disp_x);
+				data.push_back(force0);
+				data.push_back(force1);
+
+				data_all.push_back(data);
+			}
+		}
+		pclose(stream);
+	}
+	else
+	{
+		throw "Error reading data file!"; 
+	}
+
+	return data_all;
 }
 
 int save_coeff(const std::string file_name, const double& disp_x, const double& force0, const double& force1)
@@ -546,7 +612,7 @@ int save_coeff(const std::string file_name, const double& disp_x, const double& 
 	}
 	else
 	{
-		std::cout << "Could not open coefficients file!" << std::endl;
+		std::cout << "Could not open coefficiants file!" << std::endl;
 
 		return 0;
 	}

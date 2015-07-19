@@ -22,6 +22,10 @@ public:
 	{
 		ncoeff = 0;
 		quad_degree = 0;
+		local_quad_points = 0;
+
+		create_data_each_rank = " ";
+		run_create_data_rank_ok = 0;
 	}
 
 	SCSimulation_normal(
@@ -41,7 +45,7 @@ public:
 		std::string& _gather_alya_output,  
 		const unsigned int& _ncoeff, 
 		const unsigned int& _quad_degree,
-		const unsigned int& _rank,
+		unsigned int _rank,
 		const unsigned int& _nprocs,
 		const double& _rho_f_p1, 
 		const double& _rho_f_p2, 
@@ -72,6 +76,10 @@ public:
 		rank = _rank;
 		nprocs = _nprocs;
 
+		create_data_each_rank = run_create_data_rank(create_data_rank, _rank);
+		run_create_data_rank_ok = system(create_data_each_rank.c_str());
+		assert(run_create_data_rank_ok >=0 );
+
 		local_quad_points = data_decomp();
 
 		rho_f_p1 = _rho_f_p1;
@@ -80,10 +88,6 @@ public:
 		nu_f_p2 = _nu_f_p2;
 		rho_s_p1 = _rho_s_p1;
 		rho_s_p2 = _rho_s_p2;
-
-		create_data_each_rank = run_create_data_rank(create_data_rank, rank);
-		run_create_data_rank_ok = system(create_data_each_rank.c_str());
-		assert(run_create_data_rank_ok >=0 );
 	}
 
 	virtual int local_global_mapping(const int local_index, const int& rank) const
@@ -154,12 +158,17 @@ public:
 		int modify_nastin_data_ok = 0;
 		int get_data_ok = 0;
 		int gather_alya_output_ok = 0;
-		int save_coeff_ok = 0;
+
+		int no_valid_lines_local = 0;
+		int no_valid_lines = 0;
 
 		double temp = 0.0;
 		double temp_disp_x = 0.0;
 		double temp_force0 = 0.0;
 		double temp_force1 = 0.0;
+		double disp_x_local = 0.0;
+		double force0_local = 0.0;
+		double force1_local = 0.0;
 		double disp_x = 0.0;
 		double force0 = 0.0;
 		double force1 = 0.0;
@@ -167,13 +176,13 @@ public:
 		std::vector<double> disp_x_all;
 		std::vector<double> force0_all;
 		std::vector<double> force1_all;
-		std::vector<double> get_output_values;
+		vec2d_double get_output_values;
 
-		for (int i = 0; i < local_quad_degree; ++i)
+		for (int i = 0; i < local_quad_points; ++i)
 		{
 			global_id = this->local_global_mapping(i, rank);
 
-			temp = sqrt(2)*pre_proc_result[i]*nu_f_p2 + nu_f_p1;
+			temp = sqrt(2.0)*pre_proc_result[global_id]*nu_f_p2 + nu_f_p1;
 			assert(temp >= 0);
 			modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, temp, rank);
 			modify_nastin_data_ok = system(modify_nastin_data.c_str());
@@ -187,21 +196,25 @@ public:
 			gather_alya_output_ok = system(get_alya_output.c_str());
 			assert(gather_alya_output_ok >=0);
 
-			get_data = run_gather_data(gather_data_exec_sc, output_data, output_file_sc, i + 1);
+			get_data = run_gather_data(gather_data_exec_sc, output_data, output_file_sc, global_id+1, rank);
 			get_data_ok = system(get_data.c_str());
 			assert(get_data_ok >= 0);
 
-			get_output = run_get_output(get_output_sc, output_file_sc);
-			get_output_values = get_output_data(get_output);
+			get_output = run_get_output(get_output_sc, output_file_sc, rank);
+			get_output_values = get_output_data(get_output, no_valid_lines_local);
 
-			disp_x = get_output_values[0];
-			force0 = get_output_values[1];
-			force1 = get_output_values[2];
+			disp_x_local = get_output_values[i][0];
+			force0_local = get_output_values[i][1];
+			force1_local = get_output_values[i][2];
 
-			disp_x_all.push_back(disp_x);
-			force0_all.push_back(force0);
-			force1_all.push_back(force1);
+			disp_x_all.push_back(disp_x_local);
+			force0_all.push_back(force0_local);
+			force1_all.push_back(force1_local);
 		}
+
+		MPI_Allreduce(&no_valid_lines_local, &no_valid_lines, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+		/* Insert fault-tolerant mechanism here by reducing the quadrature degre */
 
 		for(int j = 0 ; j < ncoeff ; ++j)
 		{
@@ -209,31 +222,63 @@ public:
 			temp_force0 = 0.0;
 			temp_force1 = 0.0;
 
-			for (int i = 0; i < quad_degree; ++i)
+			for (int i = 0 ; i < local_quad_points ; ++i)
 			{
-				temp_disp_x += disp_x_all[i]*ghq.orthogonal_poly(j, sqrt(2)*pre_proc_result[i]) * pre_proc_result[quad_degree + i]/sqrt(M_PI);
-				temp_force0 += force0_all[i]*ghq.orthogonal_poly(j, sqrt(2)*pre_proc_result[i]) * pre_proc_result[quad_degree + i]/sqrt(M_PI);
-				temp_force1 += force1_all[i]*ghq.orthogonal_poly(j, sqrt(2)*pre_proc_result[i]) * pre_proc_result[quad_degree + i]/sqrt(M_PI);
+				temp_disp_x += disp_x_all[i]*ghq.orthogonal_poly(j, sqrt(2.0)*pre_proc_result[global_id]) * pre_proc_result[quad_degree + global_id]/sqrt(M_PI);
+				temp_force0 += force0_all[i]*ghq.orthogonal_poly(j, sqrt(2.0)*pre_proc_result[global_id]) * pre_proc_result[quad_degree + global_id]/sqrt(M_PI);
+				temp_force1 += force1_all[i]*ghq.orthogonal_poly(j, sqrt(2.0)*pre_proc_result[global_id]) * pre_proc_result[quad_degree + global_id]/sqrt(M_PI);
 			}
 
 			temp_disp_x = temp_disp_x/ghq.norm_factor(j);
 			temp_force0 = temp_force0/ghq.norm_factor(j);
 			temp_force1 = temp_force1/ghq.norm_factor(j);
 
-			save_coeff_ok = save_coeff(coeff_sc, temp_disp_x, temp_force0, temp_force1);
-			assert(save_coeff_ok == 1);		
+			MPI_Allreduce(&temp_disp_x, &disp_x, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+			MPI_Allreduce(&temp_force0, &force0, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+			MPI_Allreduce(&temp_force1, &force1, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+			if(rank == 0)
+			{
+				int save_coeff_ok = save_coeff(coeff_sc, disp_x, force0, force1);
+				assert(save_coeff_ok == 1);	
+			}	
 		}
 	}
 
 	virtual void post_processing() const
 	{
-		std::string get_postproc_stat;
-		int get_postproc_stat_ok = 0;
+		int get_coeff_ok = 0;
+		std::vector<double> disp_x;
+		std::vector<double> force0;
+		std::vector<double> force1;
 
-		get_postproc_stat = run_postproc_stat(postproc_stat_exec_sc, coeff_sc, postproc_stat_sc);
+		double mean_disp_x = 0.0;
+		double mean_forces_x = 0.0;
+		double mean_forces_y = 0.0;
+		double var_disp_x = 0.0;
+		double var_forces_x = 0.0;
+		double var_forces_y = 0.0;
 
-		get_postproc_stat_ok = system(get_postproc_stat.c_str());
-		assert(get_postproc_stat_ok >= 0);
+		get_coeff_ok = get_coeff_sc(coeff_sc, disp_x, force0, force1);
+		assert(get_coeff_ok == 1);
+
+		mean_disp_x = disp_x[0];
+		mean_forces_x = force0[0];
+		mean_forces_y = force1[0];
+
+		for(int i = 1 ; i < ncoeff ; ++i)
+		{
+			var_disp_x += disp_x[i]*disp_x[i];
+			var_forces_x += force0[i]*force0[i];
+			var_forces_y += force1[i]*force1[i];
+		}
+
+		if(rank == 0)
+		{
+			int save_stats_ok = 0;
+			save_stats_ok = write_stat_to_file(postproc_stat_sc, mean_disp_x, mean_forces_x, mean_forces_y, var_disp_x, var_forces_x, var_forces_y);
+			assert(save_stats_ok == 0);
+		}	
 	}
 
 	~SCSimulation_normal() {}

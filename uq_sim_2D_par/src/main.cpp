@@ -1,5 +1,7 @@
 #include "MCsim_normal.hpp"
 #include "MCsim_uniform.hpp"
+#include "SCsim_normal.hpp"
+#include "SCsim_uniform.hpp"
 
 int main(int argc, char** argv)
 {
@@ -153,36 +155,38 @@ int main(int argc, char** argv)
         mcs_u.simulation(pre_proc_results_mcs_dim1, pre_proc_results_mcs_dim2);
         mcs_u.post_processing();
     }
-    // else if(uq_method == 1 && pdf == 0)
-    // {
-    //     std::cout << "Yeey" << std::endl;
-    //     SCSimulation_normal scs_n(
-    //         nastin_dat, 
-    //         solidz_dat, 
-    //         run_exec, 
-    //         output_data, 
-    //         gather_data_exec_sc, 
-    //         get_output_sc,
-    //         postproc_stat_exec_sc, 
-    //         output_file_sc, 
-    //         coeff_sc,
-    //         postproc_stat_sc, 
-    //         insert_nastin_exec, 
-    //         insert_solidz_exec,
-    //         gather_alya_output, 
-    //         ncoeff, 
-    //         quad_degree, 
-    //         rho_f_p1, 
-    //         rho_f_p2, 
-    //         nu_f_p1, 
-    //         nu_f_p2, 
-    //         rho_s_p1, 
-    //         rho_s_p2);
+    else if(uq_method == 1 && pdf == 0)
+    {
+        SCSimulation_normal scs_n(
+            nastin_dat, 
+            solidz_dat,
+            create_data_rank, 
+            run_exec, 
+            output_data, 
+            gather_data_exec_sc, 
+            get_output_sc,
+            postproc_stat_exec_sc, 
+            output_file_sc, 
+            coeff_sc,
+            postproc_stat_sc, 
+            insert_nastin_exec, 
+            insert_solidz_exec,
+            gather_alya_output, 
+            ncoeff, 
+            quad_degree,
+            rank,
+            nprocs, 
+            rho_f_p1, 
+            rho_f_p2, 
+            nu_f_p1, 
+            nu_f_p2, 
+            rho_s_p1, 
+            rho_s_p2);
 
-    //     pre_proc_results_scs = scs_n.pre_processing();
-    //     scs_n.simulation(pre_proc_results_scs);
-    //     scs_n.post_processing();
-    // }
+        pre_proc_results_scs = scs_n.pre_processing();
+        scs_n.simulation(pre_proc_results_scs);
+        scs_n.post_processing();
+    }
     // else if (uq_method == 1 && pdf == 1)
     // {
     //      SCSimulation_uniform scs_u(

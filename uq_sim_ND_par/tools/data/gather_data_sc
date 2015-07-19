@@ -17,7 +17,7 @@ def gather_data(simulation_no):
 
 	try:
 		with open(datafile, 'r') as input_file:
-			with open(datafile_output, 'w') as output_file:
+			with open(datafile_output, 'a') as output_file:
 
 				if no_lines == 0:
 					line = "DATA FROM SIMULATION " + str(simulation_no) + newline

@@ -240,7 +240,7 @@ public:
 		if(rank == 0)
 		{
 			int save_stats_ok = 0;
-			save_stats_ok = write_stat_mc_to_file(postproc_stat_mc, mean_disp_x, mean_forces_x, mean_forces_y, var_disp_x, var_forces_x, var_forces_y);
+			save_stats_ok = write_stat_to_file(postproc_stat_mc, mean_disp_x, mean_forces_x, mean_forces_y, var_disp_x, var_forces_x, var_forces_y);
 			assert(save_stats_ok == 0);
 		}
 	}
