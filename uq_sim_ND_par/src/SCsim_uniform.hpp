@@ -386,21 +386,21 @@ public:
 			assert(temp_rho_s >= 0);
 			modify_solidz_data = run_insert_solidz_1d(insert_solidz_exec, solidz_dat, temp_rho_s, rank);
 
-			//modify_nastin_data_ok = system(modify_nastin_data.c_str());
+			modify_nastin_data_ok = system(modify_nastin_data.c_str());
 			assert(modify_nastin_data_ok >= 0);
-			//modify_solidz_data_ok = system(modify_solidz_data.c_str());
+			modify_solidz_data_ok = system(modify_solidz_data.c_str());
 			assert(modify_solidz_data_ok >= 0);
 
 			alya_nastin_solidz = run_alya(run_exec, rank);
-			//run_alya_ok = system(alya_nastin_solidz.c_str());
+			run_alya_ok = system(alya_nastin_solidz.c_str());
 			assert(run_alya_ok >= 0);
 
 			get_alya_output = run_gather_alya_output(gather_alya_output, global_id+1);
-			//gather_alya_output_ok = system(get_alya_output.c_str());
+			gather_alya_output_ok = system(get_alya_output.c_str());
 			assert(gather_alya_output_ok >=0);
 
 			get_data = run_gather_data(gather_data_exec_sc, output_data, output_file_sc, global_id+1, rank);
-			//get_data_ok = system(get_data.c_str());
+			get_data_ok = system(get_data.c_str());
 			assert(get_data_ok >= 0);
 
 			get_output = run_get_output(get_output_sc, output_file_sc, rank);
