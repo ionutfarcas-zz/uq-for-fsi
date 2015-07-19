@@ -15,7 +15,12 @@ private:
 	NormalRandomVariable nrv;
 
 public:
-	MCSimulation_normal() {}
+	MCSimulation_normal() 
+	{
+		nsamples = 0;
+		mean = 0.0;
+		std_dev = 0.0;
+	}
 
 	MCSimulation_normal(
 		std::string& _nastin_dat, 

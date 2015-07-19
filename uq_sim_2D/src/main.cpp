@@ -132,7 +132,6 @@ int main(int argc, char** argv)
     }
     else if(uq_method == 1 && pdf == 0)
     {
-        std::cout << "Yeey" << std::endl;
         SCSimulation_normal scs_n(
             nastin_dat, 
             solidz_dat, 

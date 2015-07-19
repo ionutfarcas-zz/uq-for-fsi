@@ -84,8 +84,38 @@ private:
 		return result;
 	}
 
+	int compute_no_coeff() const
+	{
+		int no_coeff = 1;
+
+		for(int i = 0 ; i < dim ; ++i)
+		{
+			no_coeff *= (ncoeff + i);
+		}
+
+		no_coeff = no_coeff/this->factorial(dim);
+
+		return no_coeff;
+	}
+
+	double multi_orthogonal_poly(const double& val1, const double& val2, const int& index) const
+	{
+		double multi_ortho_poly = 0.0;
+		multi_ortho_poly = glq.orthogonal_poly(multi_index_dim2[index][0], val1)*glq.orthogonal_poly(multi_index_dim2[index][1], val2)/(glq.norm_factor(multi_index_dim2[index][0])*glq.norm_factor(multi_index_dim2[index][1]));			
+
+		return multi_ortho_poly;
+	} 
+
 public:
-	SCSimulation_uniform() {}
+	SCSimulation_uniform() 
+	{
+		ncoeff = 0;
+		quad_degree = 0;
+
+		dim = 0;
+	
+		multi_index_dim2 = {{0}};
+	}
 
 	SCSimulation_uniform(
 		std::string& _nastin_dat, 
@@ -138,28 +168,6 @@ public:
 		rho_s_p1 = _rho_s_p1;
 		rho_s_p2 = _rho_s_p2;
 	}
-
-	int compute_no_coeff() const
-	{
-		int no_coeff = 1;
-
-		for(int i = 0 ; i < dim ; ++i)
-		{
-			no_coeff *= (ncoeff + i);
-		}
-
-		no_coeff = no_coeff/this->factorial(dim);
-
-		return no_coeff;
-	}
-
-	double multi_orthogonal_poly(const double& val1, const double& val2, const int& index) const
-	{
-		double multi_ortho_poly = 0.0;
-		multi_ortho_poly = glq.orthogonal_poly(multi_index_dim2[index][0], val1)*glq.orthogonal_poly(multi_index_dim2[index][1], val2)/(glq.norm_factor(multi_index_dim2[index][0])*glq.norm_factor(multi_index_dim2[index][1]));			
-
-		return multi_ortho_poly;
-	} 
 
 	virtual std::vector<double> pre_processing() const
 	{

@@ -15,7 +15,12 @@ private:
 	UniformRandomVariable urv;
 
 public:
-	MCSimulation_uniform() {}
+	MCSimulation_uniform() 
+	{
+		nsamples = 0;
+		left_param = 0.0;
+		right_param = 0.0;
+	}
 
 	MCSimulation_uniform(
 		std::string& _nastin_dat, 

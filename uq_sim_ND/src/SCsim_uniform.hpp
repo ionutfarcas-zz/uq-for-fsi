@@ -91,6 +91,33 @@ private:
 		return result;
 	}
 
+	int compute_no_coeff() const
+	{
+		int no_coeff = 1;
+
+		for(int i = 0 ; i < i_dim ; ++i)
+		{
+			no_coeff *= (i_ncoeff + i);
+		}
+
+		no_coeff = no_coeff/this->factorial(i_dim);
+
+		return no_coeff;
+	}
+
+	SGPP::float_t multi_orthogonal_poly(const std::vector<SGPP::float_t>& x, const int& index) const
+	{	
+		SGPP::float_t multi_ortho_poly = 1.0;
+		vec2d_int m_index = this->multi_index();
+
+		for(int j = 0 ; j < i_dim ; ++j)
+		{
+			multi_ortho_poly *= glq.orthogonal_poly(m_index[index][j], x[j])/glq.norm_factor(m_index[index][j]);
+		}
+
+		return multi_ortho_poly;
+	}
+
 public:
 	SCSimulation_uniform() 
 	{
@@ -187,33 +214,6 @@ public:
 		quad = SGPP::op_factory::createOperationQuadrature(*grid);
 
 		grid_storage_size = grid_storage->size();
-	}
-
-	int compute_no_coeff() const
-	{
-		int no_coeff = 1;
-
-		for(int i = 0 ; i < i_dim ; ++i)
-		{
-			no_coeff *= (i_ncoeff + i);
-		}
-
-		no_coeff = no_coeff/this->factorial(i_dim);
-
-		return no_coeff;
-	}
-
-	SGPP::float_t multi_orthogonal_poly(const std::vector<SGPP::float_t>& x, const int& index) const
-	{	
-		SGPP::float_t multi_ortho_poly = 1.0;
-		vec2d_int m_index = this->multi_index();
-
-		for(int j = 0 ; j < i_dim ; ++j)
-		{
-			multi_ortho_poly *= glq.orthogonal_poly(m_index[index][j], x[j])/glq.norm_factor(m_index[index][j]);
-		}
-
-		return multi_ortho_poly;
 	}
 
 	size_t get_storage_size() const
