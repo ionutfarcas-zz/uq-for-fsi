@@ -9,27 +9,24 @@ from os import rename, remove
 from sys import argv, exit, stdout
 from traceback import print_exc
 
-newline = str('\n')
+newline = '\n'
+space = ' '
 
 # append data
 def gather_data(simulation_no):
-	no_lines = 0
 
 	try:
 		with open(datafile, 'r') as input_file:
 			with open(datafile_output, 'w') as output_file:
-
-				if no_lines == 0:
-					line = "DATA FROM SIMULATION " + str(simulation_no) + newline
-				else:
-					line = newline + "DATA FROM SIMULATION " + str(simulation_no) + newline
+				line = "DATA FROM SIMULATION " + str(simulation_no) + newline
 				output_file.write(line)
 
 				lines = input_file.readlines()
-				output_file.write(lines[0])		
-				output_file.write(lines[1])
 
-				no_lines = no_lines + 1
+				for line in lines:
+					tokens = line.split()
+					if len(tokens) !=0 :
+						output_file.write(tokens[3] + space + tokens[7] + space + tokens[8] + newline)
 
 		input_file.close()
 		output_file.close()

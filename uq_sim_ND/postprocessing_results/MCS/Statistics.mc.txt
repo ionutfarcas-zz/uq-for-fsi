@@ -1,9 +1,21 @@
-The mean of the displacement on the x axis is: 0.000201209488404
-The variance of the displacement on the x axis is: 3.00660867409e-12
+Timestep:1 The mean of the displacement on the x axis is: 0.000195048819124
+Timestep:1 The variance of the displacement on the x axis is: 9.82442354999e-11
+Timestep:1 The mean of force 0 is:5.31235253484
+Timestep:1 The variance of force 0 is: 0.0729690958106
+Timestep:1 The mean of forces 1 is: 8.20358171915
+Timestep:1 The variance of force 1 is: 0.0324826453034
 
-The mean of force 0 is:5.12445746305
-The variance of force 0 is: 0.069054944158
+Timestep:2 The mean of the displacement on the x axis is: 0.000753679688834
+Timestep:2 The variance of the displacement on the x axis is: 1.74228021498e-09
+Timestep:2 The mean of force 0 is:0.568475112897
+Timestep:2 The variance of force 0 is: 0.482805981289
+Timestep:2 The mean of forces 1 is: 6.52186915562
+Timestep:2 The variance of force 1 is: 0.112255376359
 
-The mean of forces 1 is: 8.07282967178
-The variance of force 1 is: 0.0113435814338
+Timestep:3 The mean of the displacement on the x axis is: 0.000933395388766
+Timestep:3 The variance of the displacement on the x axis is: 1.78166824156e-09
+Timestep:3 The mean of force 0 is:0.568475112897
+Timestep:3 The variance of force 0 is: 0.482805981289
+Timestep:3 The mean of forces 1 is: 6.52186915562
+Timestep:3 The variance of force 1 is: 0.112255376359
 

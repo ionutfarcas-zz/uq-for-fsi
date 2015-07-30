@@ -3,10 +3,10 @@
 if [ $# -eq 1 ]; 
 then
 	cd ../
-	cd ../nastin_$1
-	./Alya.g Flap &
+	cd ../simulation_$1/nastin_$1
+	./Alya.x Flap &
 	cd ../solidz_$1
-	./Alya.g Flap
+	./Alya.x Flap
 else
 	echo "Error when using $0!"
 	echo "Correct usage: $0 rank"

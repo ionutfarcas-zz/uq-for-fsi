@@ -15,6 +15,7 @@
 
 typedef std::vector<std::vector<int>> vec2d_int;
 typedef std::vector<std::vector<double>> vec2d_double;
+typedef std::vector<std::vector<std::vector<double>>> vec3d_double;
 
 std::string run_insert_nastin_2d(const std::string nastin_exec, const std::string nastin_data, 
 	double& new_density, double& new_viscosity);
@@ -29,7 +30,7 @@ std::string run_gather_data(const std::string gather_data_exec, const std::strin
 	const std::string datafile_all, const int& id);
 
 std::string run_postproc_stat(const std::string postproc_stat, const std::string all_data, 
-	const std::string stats);
+	const std::string stats, const int& no_of_simulations);
 
 std::string run_get_output(const std::string get_output, const std::string data);
 
@@ -65,7 +66,8 @@ int parse_configfile(const std::string& config_file_name,
 	double& rho_s_p1,
 	double& rho_s_p2);
 
-std::vector<double> get_output_data(const std::string get_output_sc);
+void get_output_data(const std::string get_output_sc, int& no_of_datapoints, std::vector<double>& disp_x, 
+	std::vector<double>& force0, std::vector<double>& force1);
 
 int save_coeff(const std::string file_name, const double& disp_x, const double& force0, const double& force1);
 

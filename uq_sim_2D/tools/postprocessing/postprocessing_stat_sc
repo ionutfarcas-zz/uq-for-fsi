@@ -12,11 +12,15 @@ import numpy as np
 newline = str('\n')
 
 # postprocessing stochastic collocations
-def postprocessing_sc():
+def postprocessing_sc(datafile, statistics, no_of_coeff):
 
 	displacement_x = []
 	forces0 = []
 	forces1 = []
+
+	timestep_disp_x = []
+	timestep_forces0 = []
+	timestep_forces1 = []
 
 	m_disp_x = 0.
 	var_disp_x = 0.
@@ -44,30 +48,49 @@ def postprocessing_sc():
 				forces1 = np.array(forces1)
 				forces1 = forces1.astype(np.float)
 
-				m_disp_x = displacement_x[0]
-				var_disp_x = np.sum(coeff**2 for coeff in displacement_x) - m_disp_x**2
-				m_f0 = forces0[0]
-				var_f0 = np.sum(coeff**2 for coeff in forces0) - m_f0**2
-				m_f1 = forces1[0]
-				var_f1 = np.sum(coeff**2 for coeff in forces1) - m_f1**2
+				no_of_timesteps = len(displacement_x)/no_of_coeff
 
-				stat = "The mean of the displacement on the x axis is: " + str(m_disp_x) + newline
-				output_file.write(stat)
-				stat = "The variance of the displacement on the x axis is: " + str(var_disp_x) + newline
-				output_file.write(stat)
-				output_file.write(newline)
-				
-				stat = "The mean of force 0 is:" + str(m_f0) + newline
-				output_file.write(stat)
-				stat = "The variance of force 0 is: " + str(var_f0) + newline
-				output_file.write(stat)
-				output_file.write(newline)
+				for i in range(no_of_timesteps):
+					for j in range(no_of_coeff):
 
-				stat = "The mean of forces 1 is: " + str(m_f1) + newline
-				output_file.write(stat)
-				stat = "The variance of force 1 is: " + str(var_f1) + newline
-				output_file.write(stat)
-				output_file.write(newline)
+						timestep_disp_x.append(displacement_x[i*no_of_coeff + j])
+						timestep_forces0.append(forces0[i*no_of_coeff + j])
+						timestep_forces1.append(forces1[i*no_of_coeff + j])
+
+					timestep_disp_x = np.array(timestep_disp_x)
+					timestep_disp_x = timestep_disp_x.astype(np.float)
+					timestep_forces0 = np.array(timestep_forces0)
+					timestep_forces0 = timestep_forces0.astype(np.float)
+					timestep_forces1 = np.array(timestep_forces1)
+					timestep_forces1 = timestep_forces1.astype(np.float)
+
+					m_disp_x = timestep_disp_x[0]
+					var_disp_x = np.sum(coeff**2 for coeff in timestep_disp_x) - m_disp_x**2
+					m_f0 = timestep_forces0[0]
+					var_f0 = np.sum(coeff**2 for coeff in timestep_forces0) - m_f0**2
+					m_f1 = timestep_forces1[0]
+					var_f1 = np.sum(coeff**2 for coeff in timestep_forces1) - m_f1**2
+
+					stat = "Timestep:" + str(i + 1) + " The mean of the displacement on the x axis is: " + str(m_disp_x) + newline
+					output_file.write(stat)
+					stat = "Timestep:" + str(i + 1) + " The variance of the displacement on the x axis is: " + str(var_disp_x) + newline
+					output_file.write(stat)
+					
+					stat = "Timestep:" + str(i + 1) + " The mean of force 0 is:" + str(m_f0) + newline
+					output_file.write(stat)
+					stat = "Timestep:" + str(i + 1) + " The variance of force 0 is: " + str(var_f0) + newline
+					output_file.write(stat)
+
+					stat = "Timestep:" + str(i + 1) + " The mean of forces 1 is: " + str(m_f1) + newline
+					output_file.write(stat)
+					stat = "Timestep:" + str(i + 1) + " The variance of force 1 is: " + str(var_f1) + newline
+					output_file.write(stat)
+					
+					output_file.write(newline)
+
+					timestep_disp_x = []
+					timestep_forces0 = []
+					timestep_forces1 = []
 
 		input_file.close()
 		output_file.close()
@@ -78,13 +101,14 @@ def postprocessing_sc():
 
 if __name__ == "__main__":
 
-	if len(argv) != 3:
+	if len(argv) != 4:
 		print "Error in " + argv[0] + "!"
-		print "Usage: " + argv[0] + " datafile statistics_file"
+		print "Usage: " + argv[0] + " datafile statistics_file no_of_coeff"
 		exit(0)
 
 	datafile = argv[1]
 	statistics = argv[2]
+	no_of_coeff = int(argv[3])
 
-	postprocessing_sc()
+	postprocessing_sc(datafile, statistics, no_of_coeff)
 

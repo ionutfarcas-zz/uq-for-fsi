@@ -53,10 +53,10 @@ std::string run_gather_data(const std::string gather_data_exec, const std::strin
 }
 
 std::string run_postproc_stat(const std::string postproc_stat, const std::string all_data, 
-	const std::string stats)
+	const std::string stats, const int& no_of_simulations)
 {
 	std::stringstream caller;
-	caller << postproc_stat << " " << all_data << " " << stats;
+	caller << postproc_stat << " " << all_data << " " << stats << " " << no_of_simulations;
 
 	return caller.str();
 }
@@ -250,18 +250,17 @@ int parse_configfile(const std::string& config_file_name,
 	return 1;	
 }
 
-std::vector<double> get_output_data(const std::string get_output_sc) 
+void get_output_data(const std::string get_output_sc, int& no_of_datapoints, std::vector<double>& disp_x, 
+	std::vector<double>& force0, std::vector<double>& force1)
 {
     FILE* stream;
-    char buffer[256];
+    char buffer[512];
     std::string disp_x_str;
     std::string force0_str;
     std::string force1_str;
-    double disp_x;
-    double force0;
-    double force1;
-
-    std::vector<double> data;
+    double displacement_x = 0.0;
+    double force_x = 0.0;
+    double force_y = 0.0;
 
     stream = popen(get_output_sc.c_str(), "r");
     if (stream) 
@@ -273,13 +272,15 @@ std::vector<double> get_output_data(const std::string get_output_sc)
                 std::stringstream temp(buffer);
                 temp >> disp_x_str >> force0_str >> force1_str;
                 
-                disp_x = str_to_number<double>(disp_x_str);
-                force0 = str_to_number<double>(force0_str);
-                force1 = str_to_number<double>(force1_str);
+                displacement_x = str_to_number<double>(disp_x_str);
+                force_x = str_to_number<double>(force0_str);
+                force_y = str_to_number<double>(force1_str);
 
-                data.push_back(disp_x);
-                data.push_back(force0);
-                data.push_back(force1);
+                disp_x.push_back(displacement_x);
+                force0.push_back(force_x);
+                force1.push_back(force_y);
+
+                ++no_of_datapoints;
             }
         }
         pclose(stream);
@@ -288,8 +289,6 @@ std::vector<double> get_output_data(const std::string get_output_sc)
     {
         throw "Error reading data file!"; 
     }
-
-    return data;
 }
 
 int save_coeff(const std::string file_name, const double& disp_x, const double& force0, const double& force1)

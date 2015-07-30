@@ -10,6 +10,7 @@ class SCSimulation_uniform : public UQSimulation
 private:
 	int ncoeff;
 	int quad_degree;
+	int ncoeff_2dim;
 
 	int dim;
 	
@@ -111,6 +112,7 @@ public:
 	{
 		ncoeff = 0;
 		quad_degree = 0;
+		ncoeff_2dim = 0;
 
 		dim = 0;
 	
@@ -145,6 +147,7 @@ public:
 
 		dim = 2;
 
+		ncoeff_2dim = compute_no_coeff();
 		multi_index_dim2 = multi_index();
 
 		nastin_dat = _nastin_dat;
@@ -198,8 +201,6 @@ public:
 
 	virtual void simulation(std::vector<double>& pre_proc_result) const
 	{
-		int ncoeff_2dim = 0;
-
 		std::string modify_nastin_data;
 		std::string modify_solidz_data;
 		std::string get_data;
@@ -218,34 +219,34 @@ public:
 		double temp_disp_x = 0.0;
 		double temp_force0 = 0.0;
 		double temp_force1 = 0.0;
-		double disp_x = 0.0;
-		double force0 = 0.0;
-		double force1 = 0.0;
 
-		std::vector<double> disp_x_all;
-		std::vector<double> force0_all;
-		std::vector<double> force1_all;
-		vec2d_double disp_x_all_2d;
-		vec2d_double force0_all_2d;
-		vec2d_double force1_all_2d;
+		int no_of_datapoints = 0;
+		int no_of_timesteps = 0;
+		vec2d_double disp_x_all;
+		vec2d_double force0_all;
+		vec2d_double force1_all;
 
-		std::vector<double> get_output_values;
-		ncoeff_2dim = this->compute_no_coeff();
+		vec3d_double disp_x_all_2d;
+		vec3d_double force0_all_2d;
+		vec3d_double force1_all_2d;
 
 		for (int i = 0; i < quad_degree; ++i)
 		{
 			temp_nu_f = (0.5*pre_proc_result[i] + 0.5)*nu_f_p2 + nu_f_p1;
 			assert(temp_nu_f >= 0);
 			modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, temp_nu_f);
+			modify_nastin_data_ok = system(modify_nastin_data.c_str());
+			assert(modify_nastin_data_ok >= 0);
 			
 			for(int j = 0 ; j < quad_degree ; ++j)
 			{
+				std::vector<double> disp_x;
+				std::vector<double> force0;
+				std::vector<double> force1;
+
 				temp_rho_s = (0.5*pre_proc_result[i] + 0.5)*rho_s_p2 + rho_s_p1;
 				assert(temp_rho_s >= 0);
-				modify_solidz_data = run_insert_solidz_1d(insert_solidz_exec, solidz_dat, temp_rho_s);
-
-				modify_nastin_data_ok = system(modify_nastin_data.c_str());
-				assert(modify_nastin_data_ok >= 0);
+				modify_solidz_data = run_insert_solidz_1d(insert_solidz_exec, solidz_dat, temp_rho_s);	
 				modify_solidz_data_ok = system(modify_solidz_data.c_str());
 				assert(modify_solidz_data_ok >= 0);
 
@@ -261,11 +262,7 @@ public:
 				assert(get_data_ok >= 0);
 
 				get_output = run_get_output(get_output_sc, output_file_sc);
-				get_output_values = get_output_data(get_output);
-
-				disp_x = get_output_values[0];
-				force0 = get_output_values[1];
-				force1 = get_output_values[2];	
+				get_output_data(get_output, no_of_datapoints, disp_x, force0, force1);
 
 				disp_x_all.push_back(disp_x);
 				force0_all.push_back(force0);
@@ -277,24 +274,29 @@ public:
 			force1_all_2d.push_back(force1_all);
 		}
 
-		for(int j = 0 ; j < ncoeff_2dim ; ++j)
+		no_of_timesteps = no_of_datapoints/(quad_degree*quad_degree);
+
+		for(int timestep = 0 ; timestep < no_of_timesteps ; ++timestep)
 		{
-			temp_disp_x = 0.0;
-			temp_force0 = 0.0;
-			temp_force1 = 0.0;
-
-			for (int i = 0; i < quad_degree; ++i)
+			for(int j = 0 ; j < ncoeff_2dim ; ++j)
 			{
-				for(int k = 0 ; k < quad_degree ; ++k)
-				{
-					temp_disp_x += disp_x_all_2d[i][k] * multi_orthogonal_poly(0.5*pre_proc_result[i] + 0.5, 0.5*pre_proc_result[k] + 0.5, j) * pre_proc_result[quad_degree + i] * pre_proc_result[quad_degree + k];
-					temp_force0 += force0_all_2d[i][k] * multi_orthogonal_poly(0.5*pre_proc_result[i] + 0.5, 0.5*pre_proc_result[k] + 0.5, j) * pre_proc_result[quad_degree + i] * pre_proc_result[quad_degree + k];
-					temp_force1 += force1_all_2d[i][k] * multi_orthogonal_poly(0.5*pre_proc_result[i] + 0.5, 0.5*pre_proc_result[k] + 0.5, j) * pre_proc_result[quad_degree + i] * pre_proc_result[quad_degree + k];
-				}
-			}
+				temp_disp_x = 0.0;
+				temp_force0 = 0.0;
+				temp_force1 = 0.0;
 
-			save_coeff_ok = save_coeff(coeff_sc, temp_disp_x, temp_force0, temp_force1);
-			assert(save_coeff_ok == 1);		
+				for (int i = 0; i < quad_degree; ++i)
+				{
+					for(int k = 0 ; k < quad_degree ; ++k)
+					{
+						temp_disp_x += disp_x_all_2d[i][k][timestep] * multi_orthogonal_poly(0.5*pre_proc_result[i] + 0.5, 0.5*pre_proc_result[k] + 0.5, j) * pre_proc_result[quad_degree + i] * pre_proc_result[quad_degree + k];
+						temp_force0 += force0_all_2d[i][k][timestep] * multi_orthogonal_poly(0.5*pre_proc_result[i] + 0.5, 0.5*pre_proc_result[k] + 0.5, j) * pre_proc_result[quad_degree + i] * pre_proc_result[quad_degree + k];
+						temp_force1 += force1_all_2d[i][k][timestep] * multi_orthogonal_poly(0.5*pre_proc_result[i] + 0.5, 0.5*pre_proc_result[k] + 0.5, j) * pre_proc_result[quad_degree + i] * pre_proc_result[quad_degree + k];
+					}
+				}
+
+				save_coeff_ok = save_coeff(coeff_sc, temp_disp_x, temp_force0, temp_force1);
+				assert(save_coeff_ok == 1);		
+			}
 		}
 	}
 
@@ -308,7 +310,7 @@ public:
 		std::string get_postproc_stat;
 		int get_postproc_stat_ok = 0;
 
-		get_postproc_stat = run_postproc_stat(postproc_stat_exec_sc, coeff_sc, postproc_stat_sc);
+		get_postproc_stat = run_postproc_stat(postproc_stat_exec_sc, coeff_sc, postproc_stat_sc, ncoeff_2dim);
 
 		get_postproc_stat_ok = system(get_postproc_stat.c_str());
 		assert(get_postproc_stat_ok >= 0);

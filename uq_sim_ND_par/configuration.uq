@@ -11,11 +11,11 @@
 #--------------------------------------------------------------------------#
 # external files location; src location assumed to be testcase/uq code/src #
 #--------------------------------------------------------------------------#
-nastin_dat = ../../nastin/Flap.nsi.dat
-solidz_dat = ../../solidz/Flap.sld.dat
+nastin_dat = ../../simulation/nastin/Flap.nsi.dat
+solidz_dat = ../../simulation/solidz/Flap.sld.dat
 create_data_rank = ../tools/util/create_data_rank
 run_exec = ../tools/alya_run/runs
-output_data = ../../solidz/RightCorner.watchpoint.txt
+output_data = ../../simulation/solidz/RightCorner.watchpoint.txt
 gather_data_exec_mc = ../tools/data/gather_data_mc
 postproc_stat_exec_mc = ../tools/postprocessing/postprocessing_stat_mc
 postproc_file_all_mc = ../data_results/MCS/RightCorner.watchpoint.mc.txt
@@ -32,7 +32,7 @@ gather_alya_output = ../tools/postprocessing/postprocessing_alya
 #--------------------------------------------------------------------------#
 #  uq method: 0 -> monte carlo, 1 -> stochastic collocations               #
 #--------------------------------------------------------------------------#
-uq_method = 1                                                    
+uq_method = 0                                                    
 #--------------------------------------------------------------------------#
 #              pdf: 0 -> normal, 1 -> uniform                              #
 #--------------------------------------------------------------------------#
@@ -40,7 +40,7 @@ pdf = 0
 #--------------------------------------------------------------------------#
 #                      nsamples for MCS                                    #
 #--------------------------------------------------------------------------#
-nsamples = 16
+nsamples = 8
 #--------------------------------------------------------------------------#
 #           degree of truncation for for SCS                               #
 #--------------------------------------------------------------------------#
@@ -52,7 +52,7 @@ prob_dim = 2
 #--------------------------------------------------------------------------#
 #                          sparse grid level                               #
 #--------------------------------------------------------------------------#
-sg_level = 4
+sg_level = 2
 #--------------------------------------------------------------------------#
 #                       STOCHASTICS  SETUP                                 #
 #--------------------------------------------------------------------------#

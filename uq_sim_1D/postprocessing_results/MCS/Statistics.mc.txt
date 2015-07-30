@@ -1,9 +1,35 @@
-The mean of the displacement on the x axis is: 0.000201209488404
-The variance of the displacement on the x axis is: 3.00660867409e-12
+Timestep:1 The mean of the displacement on the x axis is: 0.000161545707259
+Timestep:1 The variance of the displacement on the x axis is: 2.63317904511e-12
+Timestep:1 The mean of force 0 is:6.14895677922
+Timestep:1 The variance of force 0 is: 0.04173042266
+Timestep:1 The mean of forces 1 is: 8.82102334879
+Timestep:1 The variance of force 1 is: 0.00422797632137
 
-The mean of force 0 is:5.12445746305
-The variance of force 0 is: 0.069054944158
+Timestep:2 The mean of the displacement on the x axis is: 0.000607107627645
+Timestep:2 The variance of the displacement on the x axis is: 1.96186911439e-11
+Timestep:2 The mean of force 0 is:2.98907457562
+Timestep:2 The variance of force 0 is: 0.0863039563844
+Timestep:2 The mean of forces 1 is: 7.73654915539
+Timestep:2 The variance of force 1 is: 0.00505338156105
 
-The mean of forces 1 is: 8.07282967178
-The variance of force 1 is: 0.0113435814338
+Timestep:3 The mean of the displacement on the x axis is: 0.00131385220597
+Timestep:3 The variance of the displacement on the x axis is: 4.97482273127e-10
+Timestep:3 The mean of force 0 is:-1.93525980151
+Timestep:3 The variance of force 0 is: 0.287232184979
+Timestep:3 The mean of forces 1 is: 7.51466793449
+Timestep:3 The variance of force 1 is: 0.0332039672176
+
+Timestep:4 The mean of the displacement on the x axis is: 0.00219117413921
+Timestep:4 The variance of the displacement on the x axis is: 1.81260002689e-09
+Timestep:4 The mean of force 0 is:-3.8362243779
+Timestep:4 The variance of force 0 is: 0.338695851756
+Timestep:4 The mean of forces 1 is: 6.67429693085
+Timestep:4 The variance of force 1 is: 0.00555813700433
+
+Timestep:5 The mean of the displacement on the x axis is: 0.00217192609203
+Timestep:5 The variance of the displacement on the x axis is: 1.66061508426e-09
+Timestep:5 The mean of force 0 is:-3.8362243779
+Timestep:5 The variance of force 0 is: 0.338695851756
+Timestep:5 The mean of forces 1 is: 6.67429693085
+Timestep:5 The variance of force 1 is: 0.00555813700433
 

@@ -11,6 +11,8 @@ private:
 	int i_ncoeff;
 	int i_dim;
 	int i_sg_level;
+
+	int multi_ncoeff;
 	
 	size_t grid_storage_size;	
 
@@ -138,6 +140,8 @@ public:
 		i_dim = 0;
 		i_sg_level = 0;
 
+		multi_ncoeff = 0;
+
 		grid_storage_size = 0;
 		
 		nastin_dat = "";
@@ -216,6 +220,8 @@ public:
 		rho_s_p1 = _rho_s_p1;
 		rho_s_p2 = _rho_s_p2;
 
+		multi_ncoeff = compute_no_coeff();
+
 		for(int i = 0 ; i < i_dim ; ++i)
 		{
 			l_limits.push_back(-3.0);
@@ -282,7 +288,6 @@ public:
 
 	virtual void simulation(const vec2d_float_t& pre_proc_result) const
 	{
-		int multi_ncoeff = 0;
 		double volume = 0.0;
 
 		std::string modify_nastin_data;
@@ -302,25 +307,26 @@ public:
 		double temp_rho_s = 0.0;
 		double temp_disp_x = 0.0;
 		double temp_force0 = 0.0;
-		double temp_force1 = 0.0;
-		double disp_x = 0.0;
-		double force0 = 0.0;
-		double force1 = 0.0;
+		double temp_force1 = 0.0;;
 
-		std::vector<double> disp_x_all;
-		std::vector<double> force0_all;
-		std::vector<double> force1_all;
-		std::vector<double> get_output_values;
+		int no_of_datapoints = 0;
+		int no_of_timesteps = 0;
+		vec2d_double disp_x_all;
+		vec2d_double force0_all;
+		vec2d_double force1_all;
 
 		SGPP::base::DataVector alpha_xdisp(grid_storage_size);
 		SGPP::base::DataVector alpha_force0(grid_storage_size);
 		SGPP::base::DataVector alpha_force1(grid_storage_size);
 
-		multi_ncoeff = this->compute_no_coeff();
 		volume = this->compute_volume();
 
 		for(size_t i = 0; i < grid_storage_size; ++i) 
 		{	
+			std::vector<double> disp_x;
+			std::vector<double> force0;
+			std::vector<double> force1;
+
 			temp_nu_f =  sqrt(2)*pre_proc_result[i][0]*nu_f_p2 + nu_f_p1;
 			assert(temp_nu_f >= 0);
 			modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, temp_nu_f);
@@ -346,41 +352,41 @@ public:
 			assert(get_data_ok >= 0);
 
 			get_output = run_get_output(get_output_sc, output_file_sc);
-			get_output_values = get_output_data(get_output);
-
-			disp_x = get_output_values[0];
-			force0 = get_output_values[1];
-			force1 = get_output_values[2];	
+			get_output_data(get_output, no_of_datapoints, disp_x, force0, force1);
 
 			disp_x_all.push_back(disp_x);
 			force0_all.push_back(force0);
 			force1_all.push_back(force1);
-
 		}
 
-		for(int k = 0 ; k < multi_ncoeff ; ++k)
-		{	
-			alpha_xdisp.setAll(0.0);
-			alpha_force0.setAll(0.0);
-			alpha_force1.setAll(0.0);
+		no_of_timesteps = no_of_datapoints/grid_storage_size;
 
-			for(size_t i = 0; i < grid_storage_size; ++i) 
-			{
-				alpha_xdisp[i] = disp_x_all[i]*multi_orthogonal_poly(pre_proc_result[i], k)*multi_normal_distr(pre_proc_result[i]);
-				alpha_force0[i] = force0_all[i]*multi_orthogonal_poly(pre_proc_result[i], k)*multi_normal_distr(pre_proc_result[i]);
-				alpha_force1[i] = force1_all[i]*multi_orthogonal_poly(pre_proc_result[i], k)*multi_normal_distr(pre_proc_result[i]);
+		for(int timestep = 0 ; timestep < no_of_timesteps ; ++timestep)
+		{
+			for(int k = 0 ; k < multi_ncoeff ; ++k)
+			{	
+				alpha_xdisp.setAll(0.0);
+				alpha_force0.setAll(0.0);
+				alpha_force1.setAll(0.0);
+
+				for(size_t i = 0; i < grid_storage_size; ++i) 
+				{
+					alpha_xdisp[i] = disp_x_all[i][timestep]*multi_orthogonal_poly(pre_proc_result[i], k)*multi_normal_distr(pre_proc_result[i]);
+					alpha_force0[i] = force0_all[i][timestep]*multi_orthogonal_poly(pre_proc_result[i], k)*multi_normal_distr(pre_proc_result[i]);
+					alpha_force1[i] = force1_all[i][timestep]*multi_orthogonal_poly(pre_proc_result[i], k)*multi_normal_distr(pre_proc_result[i]);
+				}
+				
+				SGPP::op_factory::createOperationHierarchisation(*grid)->doHierarchisation(alpha_xdisp);
+				SGPP::op_factory::createOperationHierarchisation(*grid)->doHierarchisation(alpha_force0);
+				SGPP::op_factory::createOperationHierarchisation(*grid)->doHierarchisation(alpha_force1);
+
+				temp_disp_x = volume*quad->doQuadrature(alpha_xdisp);
+				temp_force0 = volume*quad->doQuadrature(alpha_force0);
+				temp_force1 = volume*quad->doQuadrature(alpha_force1);
+
+				save_coeff_ok = save_coeff(coeff_sc, temp_disp_x, temp_force0, temp_force1);
+				assert(save_coeff_ok == 1);		
 			}
-			
-			SGPP::op_factory::createOperationHierarchisation(*grid)->doHierarchisation(alpha_xdisp);
-			SGPP::op_factory::createOperationHierarchisation(*grid)->doHierarchisation(alpha_force0);
-			SGPP::op_factory::createOperationHierarchisation(*grid)->doHierarchisation(alpha_force1);
-
-			temp_disp_x = volume*quad->doQuadrature(alpha_xdisp);
-			temp_force0 = volume*quad->doQuadrature(alpha_force0);
-			temp_force1 = volume*quad->doQuadrature(alpha_force1);
-
-			save_coeff_ok = save_coeff(coeff_sc, temp_disp_x, temp_force0, temp_force1);
-			assert(save_coeff_ok == 1);		
 		}
 	}
 
@@ -394,7 +400,7 @@ public:
 		std::string get_postproc_stat;
 		int get_postproc_stat_ok = 0;
 
-		get_postproc_stat = run_postproc_stat(postproc_stat_exec_sc, coeff_sc, postproc_stat_sc);
+		get_postproc_stat = run_postproc_stat(postproc_stat_exec_sc, coeff_sc, postproc_stat_sc, multi_ncoeff);
 
 		get_postproc_stat_ok = system(get_postproc_stat.c_str());
 		assert(get_postproc_stat_ok >= 0);

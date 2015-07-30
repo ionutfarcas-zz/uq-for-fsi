@@ -14,32 +14,69 @@ newline = '\n'
 space = ' '
 
 # postprocessing monte carlo
-def postprocessing_mc(datafile):
+def postprocessing_mc(datafile, no_of_simulations):
 
-	sum_displacement_x = 0.
-	sum_forces_x = 0.
-	sum_forces_y = 0.
-	sum2_displacement_x = 0
-	sum2_forces_x = 0
-	sum2_forces_y = 0
+	no_data_points = 0
+	displacement_x = []
+	forces0 = []
+	forces1 = []
 
-	valid_lines = 0
+	sum_disp_x = 0.
+	sum2_disp_x = 0.
+	sum_f_x = 0.
+	sum2_f_x = 0.
+	sum_f_y = 0.
+	sum2_f_y = 0.
+
+	sum_displacement_x = []
+	sum_forces_x = []
+	sum_forces_y = []
+	sum2_displacement_x = []
+	sum2_forces_x = []
+	sum2_forces_y = []
 
 	try:
 		with open(datafile, 'r') as input_file:
+
 			for line in input_file:
-				if line.startswith("DATA") or line.startswith("Time"):
+				if line.startswith("DATA") or line.startswith("Displacements0"):
 					continue
 				else:
-					valid_lines += 1
 					line_tokens = line.split()
 
-					sum_displacement_x	+= float(line_tokens[3])
-					sum2_displacement_x += float(line_tokens[3])**2
-					sum_forces_x	+= float(line_tokens[7])
-					sum2_forces_x += float(line_tokens[7])**2
-					sum_forces_y	+= float(line_tokens[8])
-					sum2_forces_y += float(line_tokens[8])**2
+					displacement_x.append(line_tokens[0])
+					forces0.append(line_tokens[1])
+					forces1.append(line_tokens[2])
+
+					no_data_points += 1
+
+				no_of_timesteps = len(displacement_x)/no_of_simulations
+
+			for i in range(no_of_timesteps):
+				for j in range(no_of_simulations):
+
+					sum_disp_x += float(displacement_x[i + no_of_timesteps*j])
+					sum2_disp_x += float(displacement_x[i + no_of_timesteps*j])**2
+
+					sum_f_x += float(forces0[i + no_of_timesteps*j])
+					sum2_f_x += float(forces0[i + no_of_timesteps*j])**2
+
+					sum_f_y += float(forces1[i + no_of_timesteps*j])
+					sum2_f_y += float(forces1[i + no_of_timesteps*j])**2
+
+				sum_displacement_x.append(sum_disp_x)
+				sum2_displacement_x.append(sum2_disp_x)
+				sum_forces_x.append(sum_f_x)
+				sum2_forces_x.append(sum2_f_x)
+				sum_forces_y.append(sum_f_y)
+				sum2_forces_y.append(sum2_f_y)
+
+				sum_disp_x = 0.
+				sum2_disp_x = 0.
+				sum_f_x = 0.
+				sum2_f_x = 0.
+				sum_f_y = 0.
+				sum2_f_y = 0.
 
 		input_file.close()
 	
@@ -47,21 +84,19 @@ def postprocessing_mc(datafile):
 		print_exc(file = stdout)
 		exit(0)
 
-	return valid_lines, sum_displacement_x, sum_forces_x, sum_forces_y, sum2_displacement_x, sum2_forces_x, sum2_forces_y
+	return no_of_timesteps, no_data_points, sum_displacement_x, sum_forces_x, sum_forces_y, sum2_displacement_x, sum2_forces_x, sum2_forces_y
 
 if __name__ == "__main__":
 
-	if len(argv) != 2:
+	if len(argv) != 3:
 		print "Error in " + argv[0] + "!"
-		print "Usage: " + argv[0] + " datafile"
+		print "Usage: " + argv[0] + " datafile no_of_simulations"
 		exit(0)
 
 	datafile = argv[1]
-	if(isfile(datafile)):
-		valid_lines, sum_displacement_x, sum_forces_x, sum_forces_y, sum2_displacement_x, sum2_forces_x, sum2_forces_y = postprocessing_mc(datafile)
-		stdout.write(str(valid_lines) + space + str(sum_displacement_x) + space + str(sum_forces_x) + space + str(sum_forces_y) + space + str(sum2_displacement_x) + space + str(sum2_forces_x) + space + str(sum2_forces_y) + newline)
-	else:
-		stdout.write(str(0) + space + str(0) + space + str(0) + space + str(0) + space + str(0) + space + str(0) + space + str(0) + newline)
+	no_of_simulations = int(argv[2])
 
+	no_time_steps, no_data_points, sum_displacement_x, sum_forces_x, sum_forces_y, sum2_displacement_x, sum2_forces_x, sum2_forces_y = postprocessing_mc(datafile, no_of_simulations)
 
-
+	for i in range(no_time_steps):
+		stdout.write(str(no_data_points) + space + str(sum_displacement_x[i]) + space + str(sum_forces_x[i]) + space + str(sum_forces_y[i]) + space + str(sum2_displacement_x[i]) + space + str(sum2_forces_x[i]) + space + str(sum2_forces_y[i]) + newline)

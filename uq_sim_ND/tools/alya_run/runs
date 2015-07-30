@@ -2,6 +2,6 @@
 
 cd ../
 cd ../nastin
-./Alya.g Flap &
+./Alya.x Flap &
 cd ../solidz
-./Alya.g Flap
+./Alya.x Flap

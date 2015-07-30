@@ -120,7 +120,7 @@ public:
 		std::string get_postproc_stat;
 		int get_postproc_stat_ok = 0;
 
-		get_postproc_stat = run_postproc_stat(postproc_stat_exec_mc, postproc_file_all_mc, postproc_stat_mc);
+		get_postproc_stat = run_postproc_stat(postproc_stat_exec_mc, postproc_file_all_mc, postproc_stat_mc, nsamples);
 		get_postproc_stat_ok = system(get_postproc_stat.c_str());
 		assert(get_postproc_stat_ok >= 0);
 	}
