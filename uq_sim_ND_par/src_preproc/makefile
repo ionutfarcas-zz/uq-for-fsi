@@ -1,4 +1,4 @@
-CC = mpicxx
+CC = g++
 INC = -I ~/Tools/sgpp_trunk/base/src
 CFLAGS = -O3 -Werror -std=c++11 $(INC)
 LIBS = -lm -L ~/Tools/sgpp_trunk/lib/sgpp -lsgppbase

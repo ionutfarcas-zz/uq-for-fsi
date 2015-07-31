@@ -13,8 +13,7 @@ private:
 	
 	int multi_ncoeff;
 
-	size_t grid_storage_size;
-	int local_points;	
+	size_t grid_storage_size;	
 
 	SGPP::base::Grid* grid;
 	SGPP::base::GridStorage* grid_storage;
@@ -145,8 +144,6 @@ public:
 		insert_solidz_exec = "";
 		gather_alya_output = "";
 
-		local_points = 0;
-
 		rho_f_p1 = 0.0;
 		rho_f_p2 = 0.0;
 		nu_f_p1 = 0.0;
@@ -163,7 +160,7 @@ public:
 	SCSimulation_uniform(
 		std::string& _nastin_dat, 
 		std::string& _solidz_dat,
-		std::string& _create_data_rank,  
+		std::string& _create_data_point,  
 		std::string& _run_exec, 
 		std::string& _output_data, 
 		std::string& _gather_data_exec_sc, 
@@ -178,8 +175,6 @@ public:
 		const unsigned int& _ncoeff, 
 		const unsigned int& _prob_dim,
 		const unsigned int& _sg_level,
-		unsigned int _rank,
-		const unsigned int& _nprocs,
 		const double& _rho_f_p1, 
 		const double& _rho_f_p2, 
 		const double& _nu_f_p1, 
@@ -193,7 +188,7 @@ public:
 
 		nastin_dat = _nastin_dat;
 		solidz_dat = _solidz_dat;
-		create_data_rank = _create_data_rank;
+		create_data_point = _create_data_point;
 		run_exec = _run_exec;
 		output_data = _output_data;
 		gather_data_exec_sc = _gather_data_exec_sc;
@@ -205,9 +200,6 @@ public:
 		insert_nastin_exec = _insert_nastin_exec;
 		insert_solidz_exec = _insert_solidz_exec;
 		gather_alya_output = _gather_alya_output;
-
-		rank = _rank;
-		nprocs = _nprocs;
 
 		rho_f_p1 = _rho_f_p1;
 		rho_f_p2 = _rho_f_p2;
@@ -227,7 +219,6 @@ public:
 		quad = SGPP::op_factory::createOperationQuadrature(*grid);
 
 		grid_storage_size = grid_storage->size();
-		local_points = data_decomp();
 		multi_ncoeff = compute_no_coeff();
 	}
 
@@ -235,33 +226,6 @@ public:
 	{
 		return this->grid_storage_size;
 	}
-
-	virtual int local_global_mapping(const int local_index, const int& rank) const
-	{
-		int global_id;
-		int local_points_proc;
-
-		local_points_proc = grid_storage_size/nprocs;
-		global_id = local_index + rank*local_points_proc;
-
-		return global_id;
-	}
-
-	virtual int data_decomp() const
-	{
-		int local_points_proc = 0;
-		int rem = 0;
-
-		local_points_proc = grid_storage_size/nprocs;
-		rem = grid_storage_size % nprocs;
-
-		if (rank == nprocs - 1)   
-		{
-			local_points_proc += rem;
-		}
-
-		return local_points_proc;
-	} 
 
 	virtual double compute_volume() const
 	{
@@ -308,122 +272,83 @@ public:
 
 	virtual void simulation(const vec2d_float_t& pre_proc_result) const
 	{
-		int global_id = 0;
 		double volume = 0.0;
 
 		std::string get_data;
 		std::string get_alya_output;
 		std::string get_output;
 
+		int save_coeff_ok = 0;
 		int get_data_ok = 0;
 		int gather_alya_output_ok = 0;
 
 		double disp_x = 0.0;
 		double force0 = 0.0;
 		double force1 = 0.0;
-		double temp_disp_x = 0.0;
-		double temp_force0 = 0.0;
-		double temp_force1 = 0.0;
 
-		int local_no_of_datapoints = 0;
-		int local_no_of_timesteps = 0;
+		int no_of_datapoints = 0;
+		int no_of_timesteps = 0;
 
 		vec2d_double disp_x_all;
 		vec2d_double force0_all;
 		vec2d_double force1_all;
 
-		std::vector<int> scount(nprocs, 0);
-		std::vector<int> displs(nprocs, 0);
-
-		std::vector<double> alpha_xdisp_local(local_points, 0.0);
-		std::vector<double> alpha_force0_local(local_points, 0.0);
-		std::vector<double> alpha_force1_local(local_points, 0.0);
-
-		std::vector<double> alpha_xdisp_temp(grid_storage_size, 0.0);
-		std::vector<double> alpha_force0_temp(grid_storage_size, 0.0);
-		std::vector<double> alpha_force1_temp(grid_storage_size, 0.0);
-		
-
-		for (int i = 0 ; i < nprocs; ++i)
-		{
-			scount[i] = local_points;
-			displs[i] = i * local_points;
-		}
+		SGPP::base::DataVector alpha_xdisp(grid_storage_size);
+		SGPP::base::DataVector alpha_force0(grid_storage_size);
+		SGPP::base::DataVector alpha_force1(grid_storage_size);
 
 		volume = this->compute_volume();
 
-		for(int i = 0; i < local_points; ++i) 
+		for(size_t i = 0; i < grid_storage_size; ++i) 
 		{	
 			std::vector<double> disp_x;
 			std::vector<double> force0;
-			std::vector<double> force1;
+			std::vector<double> force1;	
 
-			global_id = this->local_global_mapping(i, rank);	
-
-			get_alya_output = run_gather_alya_output(gather_alya_output, global_id+1);
+			get_alya_output = run_gather_alya_output(gather_alya_output, i+1);
 			gather_alya_output_ok = system(get_alya_output.c_str());
 			assert(gather_alya_output_ok >=0);
 
-			get_data = run_gather_data(gather_data_exec_sc, output_data, output_file_sc, global_id+1, rank);
+			get_data = run_gather_data(gather_data_exec_sc, output_data, output_file_sc, i+1, i);
 			get_data_ok = system(get_data.c_str());
 			assert(get_data_ok >= 0);
 
-			get_output = run_get_output(get_output_sc, output_file_sc, rank);
-			get_output_data(get_output, local_no_of_datapoints, disp_x, force0, force1);
+			get_output = run_get_output(get_output_sc, output_file_sc, i);
+			get_output_data(get_output, no_of_datapoints, disp_x, force0, force1);
 
 			disp_x_all.push_back(disp_x);
 			force0_all.push_back(force0);
 			force1_all.push_back(force1);
 		}
 
-		local_no_of_timesteps = local_no_of_datapoints/local_points;
+		no_of_timesteps = no_of_datapoints/grid_storage_size;
 
-		for(int time_step = 0 ; time_step < local_no_of_timesteps ; ++time_step)
+		for(int time_step = 0 ; time_step < no_of_timesteps ; ++time_step)
 		{	
-			for(int j = 0 ; j < local_points ; ++j)
-			{
-				alpha_xdisp_local[j] = disp_x_all[j][time_step];
-				alpha_force0_local[j] = force0_all[j][time_step];
-				alpha_force1_local[j] = force1_all[j][time_step];
-			}
-
-			MPI_Gatherv(&alpha_xdisp_local[0], local_points, MPI_DOUBLE, &alpha_xdisp_temp[0], &scount[0], &displs[0], MPI_DOUBLE, 0, MPI_COMM_WORLD);
-			MPI_Gatherv(&alpha_force0_local[0], local_points, MPI_DOUBLE, &alpha_force0_temp[0], &scount[0], &displs[0], MPI_DOUBLE, 0, MPI_COMM_WORLD);
-			MPI_Gatherv(&alpha_force1_local[0], local_points, MPI_DOUBLE, &alpha_force1_temp[0], &scount[0], &displs[0], MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-			if(rank == 0)
+			for(int k = 0 ; k < multi_ncoeff ; ++k)
 			{	
-				int save_coeff_ok = 0;
+				alpha_xdisp.setAll(0.0);
+				alpha_force0.setAll(0.0);
+				alpha_force1.setAll(0.0);
 
-				SGPP::base::DataVector alpha_xdisp(grid_storage_size);
-				SGPP::base::DataVector alpha_force0(grid_storage_size);
-				SGPP::base::DataVector alpha_force1(grid_storage_size);
-
-				for(int k = 0 ; k < multi_ncoeff ; ++k)
-				{	
-					alpha_xdisp.setAll(0.0);
-					alpha_force0.setAll(0.0);
-					alpha_force1.setAll(0.0);
-
-					for(size_t i = 0; i < grid_storage_size; ++i) 
-					{
-						alpha_xdisp[i] = alpha_xdisp_temp[i]*multi_orthogonal_poly(pre_proc_result[i], k);
-						alpha_force0[i] = alpha_force0_temp[i]*multi_orthogonal_poly(pre_proc_result[i], k);
-						alpha_force1[i] = alpha_force1_temp[i]*multi_orthogonal_poly(pre_proc_result[i], k);
-					}
-				
-					SGPP::op_factory::createOperationHierarchisation(*grid)->doHierarchisation(alpha_xdisp);
-					SGPP::op_factory::createOperationHierarchisation(*grid)->doHierarchisation(alpha_force0);
-					SGPP::op_factory::createOperationHierarchisation(*grid)->doHierarchisation(alpha_force1);
-
-					temp_disp_x = volume*quad->doQuadrature(alpha_xdisp);
-					temp_force0 = volume*quad->doQuadrature(alpha_force0);
-					temp_force1 = volume*quad->doQuadrature(alpha_force1);
-
-					save_coeff_ok = save_coeff(coeff_sc, temp_disp_x, temp_force0, temp_force1);
-					assert(save_coeff_ok == 1);	
+				for(size_t i = 0; i < grid_storage_size; ++i) 
+				{
+					alpha_xdisp[i] = disp_x_all[i][time_step]*multi_orthogonal_poly(pre_proc_result[i], k);
+					alpha_force0[i] = force0_all[i][time_step]*multi_orthogonal_poly(pre_proc_result[i], k);
+					alpha_force1[i] = force1_all[i][time_step]*multi_orthogonal_poly(pre_proc_result[i], k);
 				}
-			}
+
+				SGPP::op_factory::createOperationHierarchisation(*grid)->doHierarchisation(alpha_xdisp);
+				SGPP::op_factory::createOperationHierarchisation(*grid)->doHierarchisation(alpha_force0);
+				SGPP::op_factory::createOperationHierarchisation(*grid)->doHierarchisation(alpha_force1);
+
+				disp_x = volume*quad->doQuadrature(alpha_xdisp);
+				force0 = volume*quad->doQuadrature(alpha_force0);
+				force1 = volume*quad->doQuadrature(alpha_force1);
+
+				save_coeff_ok = save_coeff(coeff_sc, disp_x, force0, force1);
+				assert(save_coeff_ok == 1);	
+			}	
 		}
 	}
 
@@ -434,52 +359,49 @@ public:
 
 	virtual void post_processing() const
 	{
-		if(rank == 0)
+		int get_coeff_ok = 0;
+		int save_stats_ok = 0;
+		int no_of_timesteps = 0;
+		int time_step = 0;
+
+		std::vector<double> disp_x;
+		std::vector<double> force0;
+		std::vector<double> force1;
+
+		double mean_disp_x = 0.0;
+		double mean_forces_x = 0.0;
+		double mean_forces_y = 0.0;
+		double var_disp_x = 0.0;
+		double var_forces_x = 0.0;
+		double var_forces_y = 0.0;
+
+		get_coeff_ok = get_coeff_sc(coeff_sc, disp_x, force0, force1);
+		assert(get_coeff_ok == 1);
+
+		no_of_timesteps = disp_x.size()/multi_ncoeff;
+
+		for(int i = 0; i < no_of_timesteps ; ++i)
 		{
-			int get_coeff_ok = 0;
-			int save_stats_ok = 0;
-			int local_no_of_timesteps = 0;
-			int time_step = 0;
+			var_disp_x = 0.0;
+			var_forces_x = 0.0;
+			var_forces_y = 0.0;
 
-			std::vector<double> disp_x;
-			std::vector<double> force0;
-			std::vector<double> force1;
+			mean_disp_x = disp_x[i*multi_ncoeff];
+			mean_forces_x = force0[i*multi_ncoeff];
+			mean_forces_y = force1[i*multi_ncoeff];
 
-			double mean_disp_x = 0.0;
-			double mean_forces_x = 0.0;
-			double mean_forces_y = 0.0;
-			double var_disp_x = 0.0;
-			double var_forces_x = 0.0;
-			double var_forces_y = 0.0;
-
-			get_coeff_ok = get_coeff_sc(coeff_sc, disp_x, force0, force1);
-			assert(get_coeff_ok == 1);
-
-			local_no_of_timesteps = disp_x.size()/multi_ncoeff;
-
-			for(int i = 0; i < local_no_of_timesteps ; ++i)
+			for(int j = 1 ; j < multi_ncoeff ; ++j)
 			{
-				var_disp_x = 0.0;
-				var_forces_x = 0.0;
-				var_forces_y = 0.0;
+				var_disp_x += disp_x[i*multi_ncoeff + j]*disp_x[i*multi_ncoeff + j];
+				var_forces_x += force0[i*multi_ncoeff + j]*force0[i*multi_ncoeff + j];
+				var_forces_y += force1[i*multi_ncoeff + j]*force1[i*multi_ncoeff + j];
+			}
 
-				mean_disp_x = disp_x[i*multi_ncoeff];
-				mean_forces_x = force0[i*multi_ncoeff];
-				mean_forces_y = force1[i*multi_ncoeff];
+			time_step = i + 1;
 
-				for(int j = 1 ; j < multi_ncoeff ; ++j)
-				{
-					var_disp_x += disp_x[i*multi_ncoeff + j]*disp_x[i*multi_ncoeff + j];
-					var_forces_x += force0[i*multi_ncoeff + j]*force0[i*multi_ncoeff + j];
-					var_forces_y += force1[i*multi_ncoeff + j]*force1[i*multi_ncoeff + j];
-				}
-
-				time_step = i + 1;
-
-				save_stats_ok = write_stat_to_file(postproc_stat_sc, mean_disp_x, mean_forces_x, mean_forces_y, var_disp_x, var_forces_x, var_forces_y, time_step);
-				assert(save_stats_ok == 0);
-			}	
-		}
+			save_stats_ok = write_stat_to_file(postproc_stat_sc, mean_disp_x, mean_forces_x, mean_forces_y, var_disp_x, var_forces_x, var_forces_y, time_step);
+			assert(save_stats_ok == 0);
+		}	
 	}
 
 	~SCSimulation_uniform() {}

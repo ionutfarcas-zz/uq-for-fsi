@@ -13,7 +13,7 @@
 #--------------------------------------------------------------------------#
 nastin_dat = ../../simulation/nastin/Flap.nsi.dat
 solidz_dat = ../../simulation/solidz/Flap.sld.dat
-create_data_rank = ../tools/util/create_data_rank
+create_data_point = ../tools/util/create_data_point
 run_exec = ../tools/alya_run/runs
 output_data = ../../simulation/solidz/RightCorner.watchpoint.txt
 gather_data_exec_mc = ../tools/data/gather_data_mc
@@ -40,15 +40,15 @@ pdf = 0
 #--------------------------------------------------------------------------#
 #                      nsamples for MCS                                    #
 #--------------------------------------------------------------------------#
-nsamples = 8
+nsamples = 9
 #--------------------------------------------------------------------------#
 #           degree of truncation for for SCS                               #
 #--------------------------------------------------------------------------#
-ncoeff = 5
+ncoeff = 2
 #--------------------------------------------------------------------------#
 #                  quadrature degree for SCS                               #
 #--------------------------------------------------------------------------#
-quad_degree = 8
+quad_degree = 3
 #--------------------------------------------------------------------------#
 #                       STOCHASTICS  SETUP                                 #
 #--------------------------------------------------------------------------#

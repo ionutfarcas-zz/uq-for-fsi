@@ -11,28 +11,27 @@
 #include <ctime>
 #include <cstdlib>
 #include <vector>
+#include <valarray>
 #include <chrono>
-
-#include <mpi.h>
 
 typedef std::vector<std::vector<double>> vec2d_double;
 
 std::string run_insert_nastin_2d(const std::string nastin_exec, std::string nastin_data, 
-	double& new_density, double& new_viscosity, int rank);
+	double& new_density, double& new_viscosity, int point);
 
 std::string run_insert_nastin_1d(const std::string nastin_exec, std::string nastin_data, 
-	double& new_viscosity, int rank);
+	double& new_viscosity, int point);
 
 std::string run_insert_solidz_1d(const std::string solidz_exec, std::string solidz_data, 
-	double& new_density, int rank);
+	double& new_density, int point);
 
-std::string run_alya(const std::string& alya_run, const int& rank);
+std::string run_alya(const std::string& alya_run, const int& point);
 
-std::string run_create_data_rank(const std::string create_data_rank, const int& rank);
+std::string run_create_data_point(const std::string create_data_point, const int& point);
 
-std::string run_gather_data(const std::string gather_data_exec, std::string datafile, std::string datafile_all, const int& id, int rank);
+std::string run_gather_data(const std::string gather_data_exec, std::string datafile, std::string datafile_all, const int& id, int point);
 
-std::string run_postproc_stat(const std::string postproc_stat, std::string datafile_all, const int& no_of_simulations, int rank);
+std::string run_postproc_stat(const std::string postproc_stat, std::string datafile_all, const int& no_of_simulations, int point);
 
 std::vector<double> get_stat_mc(const std::string& get_sums, int& no_of_datapoints);
 
@@ -46,7 +45,7 @@ int write_stat_to_file(
 	const double& stddev_forces_y,
 	const int& timestep);
 
-std::string run_get_output(const std::string get_output, std::string data, int rank);
+std::string run_get_output(const std::string get_output, std::string data, int point);
 
 int get_coeff_sc(const std::string& coeff_sc, 
 	std::vector<double>& disp_x, 
@@ -58,7 +57,7 @@ std::string run_gather_alya_output(const std::string get_alya_output, const int&
 int parse_configfile(const std::string& config_file_name,
 	std::string& nastin_dat,
 	std::string& solidz_dat,
-	std::string& create_data_rank,
+	std::string& create_data_point,
 	std::string& run_exec,
 	std::string& output_data,
 	std::string& gather_data_exec_mc,
@@ -90,11 +89,5 @@ void get_output_data(const std::string get_output_sc, int& no_of_datapoints, std
 	std::vector<double>& force0, std::vector<double>& force1);
 
 int save_coeff(const std::string file_name, const double& disp_x, const double& force0, const double& force1);
-
-void Simulation_Message(const std::string& txt);
-
-void Simulation_Sync(const std::string& txt);
-
-void Simulation_Stop(const std::string& txt);
 
 #endif /* HELPER_HPP_ */

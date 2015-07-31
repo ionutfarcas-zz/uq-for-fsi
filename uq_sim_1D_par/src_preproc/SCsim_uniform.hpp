@@ -10,10 +10,6 @@ class SCSimulation_uniform : public UQSimulation
 private:
 	int ncoeff;
 	int quad_degree;
-	int local_quad_points;
-
-	std::string create_data_each_rank;
-	int run_create_data_rank_ok;
 
 	GaussLegendreQuadrature glq;
 
@@ -22,16 +18,12 @@ public:
 	{
 		ncoeff = 0;
 		quad_degree = 0;
-		local_quad_points = 0;
-
-		create_data_each_rank = " ";
-		run_create_data_rank_ok = 0;
 	}
 
 	SCSimulation_uniform(
 		std::string& _nastin_dat, 
 		std::string& _solidz_dat,
-		std::string& _create_data_rank,  
+		std::string& _create_data_point,  
 		std::string& _run_exec, 
 		std::string& _output_data, 
 		std::string& _gather_data_exec_sc, 
@@ -45,8 +37,6 @@ public:
 		std::string& _gather_alya_output,  
 		const unsigned int& _ncoeff, 
 		const unsigned int& _quad_degree,
-		unsigned int _rank,
-		const unsigned int& _nprocs,
 		const double& _rho_f_p1, 
 		const double& _rho_f_p2, 
 		const double& _nu_f_p1, 
@@ -59,7 +49,7 @@ public:
 		
 		nastin_dat = _nastin_dat;
 		solidz_dat = _solidz_dat;
-		create_data_rank = _create_data_rank;
+		create_data_point = _create_data_point;
 		run_exec = _run_exec;
 		output_data = _output_data;
 		gather_data_exec_sc = _gather_data_exec_sc;
@@ -72,16 +62,6 @@ public:
 		insert_solidz_exec = _insert_solidz_exec;
 		gather_alya_output = _gather_alya_output;
 
-		assert(_quad_degree >= _nprocs);
-		rank = _rank;
-		nprocs = _nprocs;
-
-		create_data_each_rank = run_create_data_rank(create_data_rank, _rank);
-		run_create_data_rank_ok = system(create_data_each_rank.c_str());
-		assert(run_create_data_rank_ok >=0 );
-
-		local_quad_points = data_decomp();
-
 		rho_f_p1 = _rho_f_p1;
 		rho_f_p2 = _rho_f_p2;
 		nu_f_p1 = _nu_f_p1;
@@ -89,33 +69,6 @@ public:
 		rho_s_p1 = _rho_s_p1;
 		rho_s_p2 = _rho_s_p2;
 	}
-
-	virtual int local_global_mapping(const int local_index, const int& rank) const
-	{
-		int global_id;
-		int local_quad_degree;
-
-		local_quad_degree = quad_degree/nprocs;
-		global_id = local_index + rank*local_quad_degree;
-
-		return global_id;
-	}
-
-	virtual int data_decomp() const
-	{
-		int local_quad_degree = 0;
-		int rem = 0;
-
-		local_quad_degree = quad_degree/nprocs;
-		rem = quad_degree % nprocs;
-
-		if (rank == nprocs - 1)   
-		{
-			local_quad_degree += rem;
-		}
-
-		return local_quad_degree;
-	}  
 
 	virtual std::vector<double> pre_processing() const
 	{
@@ -146,20 +99,23 @@ public:
 
 	virtual void simulation(std::vector<double>& pre_proc_result) const
 	{
-		int global_id = 0;
-
 		std::string modify_nastin_data;
 		int modify_nastin_data_ok = 0;
 		
 		double temp = 0.0;
-		
-		for (int i = 0; i < local_quad_points; ++i)
+
+		std::string create_data_each_point;
+		int run_create_data_point_ok = 0;
+
+		for (int i = 0; i < quad_degree; ++i)
 		{
-			global_id = this->local_global_mapping(i, rank);
+			create_data_each_point = run_create_data_point(create_data_point, i);
+			run_create_data_point_ok = system(create_data_each_point.c_str());
+			assert(run_create_data_point_ok >=0 );
 			
-			temp = (nu_f_p2 - nu_f_p1)/2.0*pre_proc_result[global_id] + (nu_f_p2 + nu_f_p1)/2.0;
+			temp = (nu_f_p2 - nu_f_p1)/2.0*pre_proc_result[i] + (nu_f_p2 + nu_f_p1)/2.0;
 			assert(temp >= 0);
-			modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, temp, rank);
+			modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, temp, i);
 			modify_nastin_data_ok = system(modify_nastin_data.c_str());
 			assert(modify_nastin_data_ok >= 0);
 		}

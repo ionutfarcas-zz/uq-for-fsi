@@ -17,12 +17,12 @@ T str_to_number(const std::string& no)
 }
 
 std::string run_insert_nastin_1d(const std::string nastin_exec, std::string nastin_data, 
-	double& new_viscosity, int rank)
+	double& new_viscosity, int point)
 {
 	std::string delimiter = "/";
 	std::string token;
 	std::string new_nastin_data;
-	std::string insert_rank = "_" + std::to_string(rank);
+	std::string insert_point = "_" + std::to_string(point);
 	size_t pos = 0;
 	int iter = 0;
 
@@ -35,7 +35,7 @@ std::string run_insert_nastin_1d(const std::string nastin_exec, std::string nast
 		
 		if(iter == 2 || iter == 3)
 		{
-			new_nastin_data += insert_rank;
+			new_nastin_data += insert_point;
 		}
 
 		new_nastin_data += delimiter;
@@ -50,12 +50,12 @@ std::string run_insert_nastin_1d(const std::string nastin_exec, std::string nast
 }
 
 std::string run_insert_nastin_2d(const std::string nastin_exec, std::string nastin_data, 
-	double& new_density, double& new_viscosity, int rank)
+	double& new_density, double& new_viscosity, int point)
 {
 	std::string delimiter = "/";
 	std::string token;
 	std::string new_nastin_data;
-	std::string insert_rank = "_" + std::to_string(rank);
+	std::string insert_point = "_" + std::to_string(point);
 	size_t pos = 0;
 	int iter = 0;
 
@@ -68,7 +68,7 @@ std::string run_insert_nastin_2d(const std::string nastin_exec, std::string nast
 		
 		if(iter == 2 || iter == 3)
 		{
-			new_nastin_data += insert_rank;
+			new_nastin_data += insert_point;
 		}
 
 		new_nastin_data += delimiter;
@@ -83,12 +83,12 @@ std::string run_insert_nastin_2d(const std::string nastin_exec, std::string nast
 }
 
 std::string run_insert_solidz_1d(const std::string solidz_exec, std::string solidz_data, 
-	double& new_density, int rank)
+	double& new_density, int point)
 {
 	std::string delimiter = "/";
 	std::string token;
 	std::string new_solidz_data;
-	std::string insert_rank = "_" + std::to_string(rank);
+	std::string insert_point = "_" + std::to_string(point);
 	size_t pos = 0;
 	int iter = 0;
 
@@ -101,7 +101,7 @@ std::string run_insert_solidz_1d(const std::string solidz_exec, std::string soli
 		
 		if(iter == 2 || iter == 3)
 		{
-			new_solidz_data += insert_rank;
+			new_solidz_data += insert_point;
 		}
 
 		new_solidz_data += delimiter;
@@ -115,30 +115,30 @@ std::string run_insert_solidz_1d(const std::string solidz_exec, std::string soli
 	return caller.str();
 }
 
-std::string run_alya(const std::string& alya_run, const int& rank)
+std::string run_alya(const std::string& alya_run, const int& point)
 {
 	std::stringstream caller;
-	caller << alya_run << " " << rank;
+	caller << alya_run << " " << point;
 
 	return caller.str();
 }
 
-std::string run_create_data_rank(const std::string create_data_rank, const int& rank)
+std::string run_create_data_point(const std::string create_data_point, const int& point)
 {
 	std::stringstream caller;
-	caller << create_data_rank << " " << rank;
+	caller << create_data_point << " " << point;
 
 	return caller.str();
 }
 
-std::string run_gather_data(const std::string gather_data_exec, std::string datafile, std::string datafile_all, const int& id, int rank)
+std::string run_gather_data(const std::string gather_data_exec, std::string datafile, std::string datafile_all, const int& id, int point)
 {
 	std::string delimiter = "/";
 	std::string token;
 	std::string new_datafile;
 	std::string new_datafile_all;
-	std::string insert_rank = "_" + std::to_string(rank);
-	std::string rank_insert = std::to_string(rank) + "_";
+	std::string insert_point = "_" + std::to_string(point);
+	std::string point_insert = std::to_string(point) + "_";
 	size_t pos = 0;
 	int iter_data = 0;
 
@@ -151,7 +151,7 @@ std::string run_gather_data(const std::string gather_data_exec, std::string data
 		
 		if(iter_data == 2)
 		{
-			new_datafile += insert_rank;
+			new_datafile += insert_point;
 		}
 
 		new_datafile += delimiter;
@@ -168,19 +168,19 @@ std::string run_gather_data(const std::string gather_data_exec, std::string data
 		new_datafile_all += delimiter;
 		datafile_all.erase(0, pos + delimiter.length());
 	}
-	new_datafile_all += rank_insert + datafile_all;
+	new_datafile_all += point_insert + datafile_all;
 
 	caller << gather_data_exec << " " << new_datafile << " " << new_datafile_all << " " << id;
 
 	return caller.str();
 }
 
-std::string run_postproc_stat(const std::string postproc_stat, std::string datafile_all, int rank)
+std::string run_postproc_stat(const std::string postproc_stat, std::string datafile_all, int point)
 {
 	std::string delimiter = "/";
 	std::string token;
 	std::string new_datafile_all;
-	std::string rank_insert = std::to_string(rank) + "_";
+	std::string point_insert = std::to_string(point) + "_";
 	size_t pos = 0;
 
 	std::stringstream caller;
@@ -193,7 +193,7 @@ std::string run_postproc_stat(const std::string postproc_stat, std::string dataf
 		new_datafile_all += delimiter;
 		datafile_all.erase(0, pos + delimiter.length());
 	}
-	new_datafile_all += rank_insert + datafile_all;
+	new_datafile_all += point_insert + datafile_all;
 
 	caller << postproc_stat << " " << new_datafile_all;
 
@@ -295,12 +295,12 @@ int write_stat_to_file(
   	return 0;
 }
 
-std::string run_get_output(const std::string get_output, std::string data, int rank)
+std::string run_get_output(const std::string get_output, std::string data, int point)
 {
 	std::string delimiter = "/";
 	std::string token;
 	std::string new_data;
-	std::string rank_insert = std::to_string(rank) + "_";
+	std::string point_insert = std::to_string(point) + "_";
 	size_t pos = 0;
 
 	std::stringstream caller;
@@ -313,7 +313,7 @@ std::string run_get_output(const std::string get_output, std::string data, int r
 		new_data += delimiter;
 		data.erase(0, pos + delimiter.length());
 	}
-	new_data += rank_insert + data;
+	new_data += point_insert + data;
 
 	caller << get_output << " " << new_data;
 
@@ -373,7 +373,7 @@ std::string run_gather_alya_output(const std::string get_alya_output, const int&
 int parse_configfile(const std::string& config_file_name,
 	std::string& nastin_dat,
 	std::string& solidz_dat,
-	std::string& create_data_rank,
+	std::string& create_data_point,
 	std::string& run_exec,
 	std::string& output_data,
 	std::string& gather_data_exec_mc,
@@ -429,9 +429,9 @@ int parse_configfile(const std::string& config_file_name,
 			{
 				solidz_dat = token_3;
 			}
-			else if(token_1.compare("create_data_rank") == 0)
+			else if(token_1.compare("create_data_point") == 0)
 			{
-				create_data_rank = token_3;
+				create_data_point = token_3;
 			}
 			else if(token_1.compare("run_exec") == 0)
 			{
@@ -633,41 +633,4 @@ int l1_norm(const std::vector<int> mindex)
 	}
 
 	return norm;
-}
-
-void Simulation_Message(const std::string& txt)
-{
-	int myrank;
-
-	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-	std::cout << "-MESSAGE- P:" << myrank << " " << txt << std::endl;
-	fflush(stdout);
-	fflush(stderr);
-}
-
-
-void Simulation_Sync(const std::string& txt)
-{
-	int myrank;
-
-	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-	MPI_Barrier(MPI_COMM_WORLD);                               
-	std::cout << "-MESSAGE- P:" << myrank << " " << txt << std::endl;
-	fflush(stdout);
-	fflush(stderr);
-	MPI_Barrier(MPI_COMM_WORLD);
-}
-
-
-void Simulation_Stop(const std::string& txt)
-{
-	int myrank;
-
-	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-	MPI_Barrier(MPI_COMM_WORLD);
-	std::cout << "-STOP- P:" << myrank << " " << txt << std::endl;
-	fflush(stdout);
-	fflush(stderr);
-	MPI_Barrier(MPI_COMM_WORLD);
-	MPI_Finalize();
 }

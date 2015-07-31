@@ -13,7 +13,7 @@
 #--------------------------------------------------------------------------#
 nastin_dat = ../../simulation/nastin/Flap.nsi.dat
 solidz_dat = ../../simulation/solidz/Flap.sld.dat
-create_data_rank = ../tools/util/create_data_rank
+create_data_point = ../tools/util/create_data_point
 run_exec = ../tools/alya_run/runs
 output_data = ../../simulation/solidz/RightCorner.watchpoint.txt
 gather_data_exec_mc = ../tools/data/gather_data_mc
@@ -32,7 +32,7 @@ gather_alya_output = ../tools/postprocessing/postprocessing_alya
 #--------------------------------------------------------------------------#
 #  uq method: 0 -> monte carlo, 1 -> stochastic collocations               #
 #--------------------------------------------------------------------------#
-uq_method = 1                                                   
+uq_method = 0                                                   
 #--------------------------------------------------------------------------#
 #              pdf: 0 -> normal, 1 -> uniform                              #
 #--------------------------------------------------------------------------#
@@ -40,7 +40,7 @@ pdf = 0
 #--------------------------------------------------------------------------#
 #                      nsamples for MCS                                    #
 #--------------------------------------------------------------------------#
-nsamples = 16
+nsamples = 8
 #--------------------------------------------------------------------------#
 #           degree of truncation for for SCS                               #
 #--------------------------------------------------------------------------#

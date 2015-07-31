@@ -9,14 +9,10 @@
 #include <cstdlib>
 
 #include "helper.hpp"
-#include "sgpp_base.hpp"
 
 class UQSimulation
 {
 protected:
-	int rank;
-	int nprocs;
-
 	double rho_f_p1;
 	double rho_f_p2;
 	double nu_f_p1;
@@ -25,7 +21,7 @@ protected:
 	double rho_s_p2;
 	std::string nastin_dat;
 	std::string solidz_dat;
-	std::string create_data_rank;
+	std::string create_data_point;
 	std::string run_exec;
 	std::string output_data;
 	std::string gather_data_exec_mc;
@@ -43,9 +39,6 @@ protected:
 	std::string gather_alya_output;
 
 public:
-	virtual int local_global_mapping(const int local_index, const int& rank) const = 0;
-	virtual int data_decomp() const = 0;
-
 	virtual double compute_volume() const = 0;
 
 	virtual vec2d_float_t pre_processing() const = 0;

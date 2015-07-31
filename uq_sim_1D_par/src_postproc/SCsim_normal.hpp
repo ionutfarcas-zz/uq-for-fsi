@@ -3,14 +3,12 @@
 
 #include "UQsim.hpp"
 #include "gauss_hermite_quad.hpp"
-#include "helper.hpp"
 
 class SCSimulation_normal : public UQSimulation
 {
 private:
 	int ncoeff;
-	int quad_degree;
-	int local_quad_points;
+	int quad_degree;;
 	
 	GaussHermiteQuadrature ghq;
 
@@ -19,13 +17,12 @@ public:
 	{
 		ncoeff = 0;
 		quad_degree = 0;
-		local_quad_points = 0;
 	}
 
 	SCSimulation_normal(
 		std::string& _nastin_dat, 
 		std::string& _solidz_dat,
-		std::string& _create_data_rank,  
+		std::string& _create_data_point,  
 		std::string& _run_exec, 
 		std::string& _output_data, 
 		std::string& _gather_data_exec_sc, 
@@ -39,8 +36,6 @@ public:
 		std::string& _gather_alya_output,  
 		const unsigned int& _ncoeff, 
 		const unsigned int& _quad_degree,
-		unsigned int _rank,
-		const unsigned int& _nprocs,
 		const double& _rho_f_p1, 
 		const double& _rho_f_p2, 
 		const double& _nu_f_p1, 
@@ -53,7 +48,7 @@ public:
 		
 		nastin_dat = _nastin_dat;
 		solidz_dat = _solidz_dat;
-		create_data_rank = _create_data_rank;
+		create_data_point = _create_data_point;
 		run_exec = _run_exec;
 		output_data = _output_data;
 		gather_data_exec_sc = _gather_data_exec_sc;
@@ -66,12 +61,6 @@ public:
 		insert_solidz_exec = _insert_solidz_exec;
 		gather_alya_output = _gather_alya_output;
 
-		assert(_quad_degree >= _nprocs);
-		rank = _rank;
-		nprocs = _nprocs;
-
-		local_quad_points = data_decomp();
-
 		rho_f_p1 = _rho_f_p1;
 		rho_f_p2 = _rho_f_p2;
 		nu_f_p1 = _nu_f_p1;
@@ -79,33 +68,6 @@ public:
 		rho_s_p1 = _rho_s_p1;
 		rho_s_p2 = _rho_s_p2;
 	}
-
-	virtual int local_global_mapping(const int local_index, const int& rank) const
-	{
-		int global_id;
-		int local_quad_degree;
-
-		local_quad_degree = quad_degree/nprocs;
-		global_id = local_index + rank*local_quad_degree;
-
-		return global_id;
-	}
-
-	virtual int data_decomp() const
-	{
-		int local_quad_degree = 0;
-		int rem = 0;
-
-		local_quad_degree = quad_degree/nprocs;
-		rem = quad_degree % nprocs;
-
-		if (rank == nprocs - 1)   
-		{
-			local_quad_degree += rem;
-		}
-
-		return local_quad_degree;
-	} 
 
 	virtual std::vector<double> pre_processing() const
 	{
@@ -136,8 +98,6 @@ public:
 	
 	virtual void simulation(std::vector<double>& pre_proc_result) const
 	{
-		int global_id = 0;
-
 		std::string get_data;
 		std::string get_alya_output;
 		std::string get_output;
@@ -148,79 +108,70 @@ public:
 		double disp_x = 0.0;
 		double force0 = 0.0;
 		double force1 = 0.0;
-		double temp_disp_x = 0.0;
-		double temp_force0 = 0.0;
-		double temp_force1 = 0.0;
 
-		int local_no_of_datapoints = 0;
-		int local_no_of_timesteps = 0;
+		int no_of_datapoints = 0;
+		int no_of_timesteps = 0;
 
 		vec2d_double disp_x_all;
 		vec2d_double force0_all;
 		vec2d_double force1_all;
 
-		for (int i = 0; i < local_quad_points; ++i)
+		for (int i = 0; i < quad_degree; ++i)
 		{
 			std::vector<double> disp_x;
 			std::vector<double> force0;
 			std::vector<double> force1;
 
-			global_id = this->local_global_mapping(i, rank);
-
-			get_alya_output = run_gather_alya_output(gather_alya_output, global_id+1);
+			get_alya_output = run_gather_alya_output(gather_alya_output, i+1);
 			gather_alya_output_ok = system(get_alya_output.c_str());
 			assert(gather_alya_output_ok >=0);
 
-			get_data = run_gather_data(gather_data_exec_sc, output_data, output_file_sc, global_id+1, rank);
+			get_data = run_gather_data(gather_data_exec_sc, output_data, output_file_sc, i+1, i);
 			get_data_ok = system(get_data.c_str());
 			assert(get_data_ok >= 0);
 
-			get_output = run_get_output(get_output_sc, output_file_sc, rank);
-			get_output_data(get_output, local_no_of_datapoints, disp_x, force0, force1);
+			get_output = run_get_output(get_output_sc, output_file_sc, i);
+			get_output_data(get_output, no_of_datapoints, disp_x, force0, force1);
 
 			disp_x_all.push_back(disp_x);
 			force0_all.push_back(force0);
 			force1_all.push_back(force1);
 		}
 
-		local_no_of_timesteps = local_no_of_datapoints/local_quad_points;
+		no_of_timesteps = no_of_datapoints/quad_degree;
 
-		for(int timestep = 0 ; timestep < local_no_of_timesteps ; ++timestep)
+		for(int timestep = 0 ; timestep < no_of_timesteps ; ++timestep)
 		{
 			for(int j = 0 ; j < ncoeff ; ++j)
 			{
-				temp_disp_x = 0.0;
-				temp_force0 = 0.0;
-				temp_force1 = 0.0;
+				disp_x = 0.0;
+				force0 = 0.0;
+				force1 = 0.0;
 
-				for (int i = 0 ; i < local_quad_points ; ++i)
+				for (int i = 0 ; i < quad_degree ; ++i)
 				{
-					temp_disp_x += disp_x_all[i][timestep]*ghq.orthogonal_poly(j, sqrt(2.0)*pre_proc_result[global_id]) * pre_proc_result[quad_degree + global_id]/sqrt(M_PI);
-					temp_force0 += force0_all[i][timestep]*ghq.orthogonal_poly(j, sqrt(2.0)*pre_proc_result[global_id]) * pre_proc_result[quad_degree + global_id]/sqrt(M_PI);
-					temp_force1 += force1_all[i][timestep]*ghq.orthogonal_poly(j, sqrt(2.0)*pre_proc_result[global_id]) * pre_proc_result[quad_degree + global_id]/sqrt(M_PI);
+					disp_x += disp_x_all[i][timestep]*ghq.orthogonal_poly(j, sqrt(2.0)*pre_proc_result[i]) * pre_proc_result[quad_degree + i]/sqrt(M_PI);
+					force0 += force0_all[i][timestep]*ghq.orthogonal_poly(j, sqrt(2.0)*pre_proc_result[i]) * pre_proc_result[quad_degree + i]/sqrt(M_PI);
+					force1 += force1_all[i][timestep]*ghq.orthogonal_poly(j, sqrt(2.0)*pre_proc_result[i]) * pre_proc_result[quad_degree + i]/sqrt(M_PI);
 				}
 
-				temp_disp_x = temp_disp_x/ghq.norm_factor(j);
-				temp_force0 = temp_force0/ghq.norm_factor(j);
-				temp_force1 = temp_force1/ghq.norm_factor(j);
-
-				MPI_Allreduce(&temp_disp_x, &disp_x, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-				MPI_Allreduce(&temp_force0, &force0, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-				MPI_Allreduce(&temp_force1, &force1, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-				if(rank == 0)
-				{
-					int save_coeff_ok = save_coeff(coeff_sc, disp_x, force0, force1);
-					assert(save_coeff_ok == 1);	
-				}	
+				disp_x = disp_x/ghq.norm_factor(j);
+				force0 = force0/ghq.norm_factor(j);
+				force1 = force1/ghq.norm_factor(j);
+				
+				int save_coeff_ok = save_coeff(coeff_sc, disp_x, force0, force1);
+				assert(save_coeff_ok == 1);					
 			}
 		}
 	}
 
 	virtual void post_processing() const
 	{
+		int time_step = 0;
+		int save_stats_ok = 0;
 		int get_coeff_ok = 0;
-		int local_no_of_timesteps;
+		int no_of_timesteps = 0;
+
 		std::vector<double> disp_x;
 		std::vector<double> force0;
 		std::vector<double> force1;
@@ -235,9 +186,9 @@ public:
 		get_coeff_ok = get_coeff_sc(coeff_sc, disp_x, force0, force1);
 		assert(get_coeff_ok == 1);
 
-		local_no_of_timesteps = disp_x.size()/ncoeff;
+		no_of_timesteps = disp_x.size()/ncoeff;
 
-		for(int i = 0; i < local_no_of_timesteps ; ++i)
+		for(int i = 0; i < no_of_timesteps ; ++i)
 		{
 			var_disp_x = 0.0;
 			var_forces_x = 0.0;
@@ -254,15 +205,9 @@ public:
 				var_forces_y += force1[i*ncoeff + j]*force1[i*ncoeff + j];
 			}
 
-			if(rank == 0)
-			{
-				int time_step = 0;
-				int save_stats_ok = 0;
-
-				time_step = i + 1;
-				save_stats_ok = write_stat_to_file(postproc_stat_sc, mean_disp_x, mean_forces_x, mean_forces_y, var_disp_x, var_forces_x, var_forces_y, time_step);
-				assert(save_stats_ok == 0);
-			}	
+			time_step = i + 1;
+			save_stats_ok = write_stat_to_file(postproc_stat_sc, mean_disp_x, mean_forces_x, mean_forces_y, var_disp_x, var_forces_x, var_forces_y, time_step);
+			assert(save_stats_ok == 0);				
 		}
 	}
 

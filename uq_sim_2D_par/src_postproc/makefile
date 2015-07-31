@@ -1,4 +1,4 @@
-CC = mpicxx
+CC = g++
 CFLAGS = -Wall -Werror -O2 -std=c++11
 LIBS = -lm
 

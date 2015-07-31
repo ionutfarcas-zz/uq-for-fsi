@@ -13,8 +13,7 @@ private:
 	
 	int multi_ncoeff;
 
-	size_t grid_storage_size;
-	int local_points;	
+	size_t grid_storage_size;	
 
 	SGPP::base::Grid* grid;
 	SGPP::base::GridStorage* grid_storage;
@@ -23,9 +22,6 @@ private:
 
 	std::vector<double> l_limits;
 	std::vector<double> r_limits;
-
-	std::string create_data_each_rank;
-	int run_create_data_rank_ok;
 
 	GaussHermiteQuadrature ghq;
 
@@ -160,11 +156,6 @@ public:
 		insert_solidz_exec = "";
 		gather_alya_output = "";
 
-		local_points = 0;
-
-		create_data_each_rank = " ";
-		run_create_data_rank_ok = 0;
-
 		rho_f_p1 = 0.0;
 		rho_f_p2 = 0.0;
 		nu_f_p1 = 0.0;
@@ -181,7 +172,7 @@ public:
 	SCSimulation_normal(
 		std::string& _nastin_dat, 
 		std::string& _solidz_dat,
-		std::string& _create_data_rank,  
+		std::string& _create_data_point,  
 		std::string& _run_exec, 
 		std::string& _output_data, 
 		std::string& _gather_data_exec_sc, 
@@ -196,8 +187,6 @@ public:
 		const unsigned int& _ncoeff, 
 		const unsigned int& _prob_dim,
 		const unsigned int& _sg_level,
-		unsigned int _rank,
-		const unsigned int& _nprocs,
 		const double& _rho_f_p1, 
 		const double& _rho_f_p2, 
 		const double& _nu_f_p1, 
@@ -211,7 +200,7 @@ public:
 
 		nastin_dat = _nastin_dat;
 		solidz_dat = _solidz_dat;
-		create_data_rank = _create_data_rank;
+		create_data_point = _create_data_point;
 		run_exec = _run_exec;
 		output_data = _output_data;
 		gather_data_exec_sc = _gather_data_exec_sc;
@@ -223,9 +212,6 @@ public:
 		insert_nastin_exec = _insert_nastin_exec;
 		insert_solidz_exec = _insert_solidz_exec;
 		gather_alya_output = _gather_alya_output;
-
-		rank = _rank;
-		nprocs = _nprocs;
 
 		rho_f_p1 = _rho_f_p1;
 		rho_f_p2 = _rho_f_p2;
@@ -240,10 +226,6 @@ public:
 			r_limits.push_back(3.0);
 		}
 
-		create_data_each_rank = run_create_data_rank(create_data_rank, _rank);
-		run_create_data_rank_ok = system(create_data_each_rank.c_str());
-		assert(run_create_data_rank_ok >=0 );
-
 		grid = SGPP::base::Grid::createLinearGrid(_prob_dim);
 		grid_storage = grid->getStorage(); 
 		grid_gen = grid->createGridGenerator();
@@ -252,7 +234,6 @@ public:
 		quad = SGPP::op_factory::createOperationQuadrature(*grid);
 
 		grid_storage_size = grid_storage->size();
-		local_points = data_decomp();
 		multi_ncoeff = compute_no_coeff();
 	}
 
@@ -260,33 +241,6 @@ public:
 	{
 		return this->grid_storage_size;
 	}
-
-	virtual int local_global_mapping(const int local_index, const int& rank) const
-	{
-		int global_id;
-		int local_points_proc;
-
-		local_points_proc = grid_storage_size/nprocs;
-		global_id = local_index + rank*local_points_proc;
-
-		return global_id;
-	}
-
-	virtual int data_decomp() const
-	{
-		int local_points_proc = 0;
-		int rem = 0;
-
-		local_points_proc = grid_storage_size/nprocs;
-		rem = grid_storage_size % nprocs;
-
-		if (rank == nprocs - 1)   
-		{
-			local_points_proc += rem;
-		}
-
-		return local_points_proc;
-	} 
 
 	virtual double compute_volume() const
 	{
@@ -332,9 +286,7 @@ public:
 	}
 
 	virtual void simulation(const vec2d_float_t& pre_proc_result) const
-	{
-		int global_id = 0;
-		
+	{		
 		std::string modify_nastin_data;
 		std::string modify_solidz_data;
 		int modify_nastin_data_ok = 0;
@@ -343,17 +295,22 @@ public:
 		double temp_nu_f = 0.0;
 		double temp_rho_s = 0.0;
 
-		for(int i = 0; i < local_points; ++i) 
+		std::string create_data_each_point;
+		int run_create_data_point_ok = 0;
+
+		for(size_t i = 0; i < grid_storage_size; ++i) 
 		{	
-			global_id = this->local_global_mapping(i, rank);	
+			create_data_each_point = run_create_data_point(create_data_point, i);
+			run_create_data_point_ok = system(create_data_each_point.c_str());
+			assert(run_create_data_point_ok >=0 );
 
-			temp_nu_f =  sqrt(2)*pre_proc_result[global_id][0]*nu_f_p2 + nu_f_p1;
+			temp_nu_f =  sqrt(2)*pre_proc_result[i][0]*nu_f_p2 + nu_f_p1;
 			assert(temp_nu_f >= 0);
-			modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, temp_nu_f, rank);
+			modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, temp_nu_f, i);
 
-			temp_rho_s = sqrt(2)*pre_proc_result[global_id][1]*rho_s_p2 + rho_s_p1;
+			temp_rho_s = sqrt(2)*pre_proc_result[i][1]*rho_s_p2 + rho_s_p1;
 			assert(temp_rho_s >= 0);
-			modify_solidz_data = run_insert_solidz_1d(insert_solidz_exec, solidz_dat, temp_rho_s, rank);
+			modify_solidz_data = run_insert_solidz_1d(insert_solidz_exec, solidz_dat, temp_rho_s, i);
 
 			modify_nastin_data_ok = system(modify_nastin_data.c_str());
 			assert(modify_nastin_data_ok >= 0);

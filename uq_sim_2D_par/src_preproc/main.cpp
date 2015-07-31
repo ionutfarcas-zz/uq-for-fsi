@@ -6,10 +6,6 @@
 int main(int argc, char** argv)
 {
     std::string config_file_name = "../configuration.uq";
-    std::string eos = "End of simulation";
-
-    int nprocs = 0;
-    int rank = 0;
 
     std::string nastin_dat;
     std::string solidz_dat;
@@ -42,22 +38,11 @@ int main(int argc, char** argv)
     double rho_s_p1 = 0.0;
     double rho_s_p2 = 0.0;
 
-    std::vector<double> pre_proc_results_scs;
+    vec2d_double scs_nodes;
+    vec2d_double scs_weights;
+
     std::vector<double> pre_proc_results_mcs_dim1;
     std::vector<double> pre_proc_results_mcs_dim2;
-
-    double start_time = 0.0;
-    double end_time = 0.0;
-    double end_time_max = 0.0;
-  
-    MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    if(rank == 0) 
-    {
-        start_time = MPI_Wtime();
-    }
 
     if(parse_configfile(
         config_file_name.c_str(), 
@@ -110,9 +95,7 @@ int main(int argc, char** argv)
             insert_nastin_exec, 
             insert_solidz_exec,
             gather_alya_output, 
-            nsamples,
-            rank,
-            nprocs, 
+            nsamples, 
             rho_f_p1, 
             rho_f_p2, 
             nu_f_p1, 
@@ -126,7 +109,7 @@ int main(int argc, char** argv)
     }
     else if(uq_method == 0 && pdf == 1)
     {
-        MCSimulation_uniform mcs_u(
+         MCSimulation_normal mcs_u(
             nastin_dat, 
             solidz_dat,
             create_data_rank, 
@@ -139,9 +122,7 @@ int main(int argc, char** argv)
             insert_nastin_exec, 
             insert_solidz_exec,
             gather_alya_output, 
-            nsamples,
-            rank,
-            nprocs, 
+            nsamples, 
             rho_f_p1, 
             rho_f_p2, 
             nu_f_p1, 
@@ -172,8 +153,6 @@ int main(int argc, char** argv)
             gather_alya_output, 
             ncoeff, 
             quad_degree,
-            rank,
-            nprocs, 
             rho_f_p1, 
             rho_f_p2, 
             nu_f_p1, 
@@ -181,9 +160,8 @@ int main(int argc, char** argv)
             rho_s_p1, 
             rho_s_p2);
 
-        pre_proc_results_scs = scs_n.pre_processing();
-        scs_n.simulation(pre_proc_results_scs);
-        scs_n.post_processing();
+        scs_n.pre_processing(scs_nodes, scs_weights);
+        scs_n.simulation(scs_nodes, scs_weights);
     }
     else if (uq_method == 1 && pdf == 1)
     {
@@ -204,8 +182,6 @@ int main(int argc, char** argv)
             gather_alya_output, 
             ncoeff, 
             quad_degree,
-            rank,
-            nprocs, 
             rho_f_p1, 
             rho_f_p2, 
             nu_f_p1, 
@@ -213,36 +189,15 @@ int main(int argc, char** argv)
             rho_s_p1, 
             rho_s_p2);
 
-        pre_proc_results_scs = scs_u.pre_processing();
-        scs_u.simulation(pre_proc_results_scs);
-        scs_u.post_processing();
+        scs_u.pre_processing(scs_nodes, scs_weights);
+        scs_u.simulation(scs_nodes, scs_weights);
     }
     else
     {
-        if(rank == 0)
-        {
-            std::cout << "Unknown combitation; Please try again!" << std::endl;
-            std::cout << "uq method: 0 -> monte carlo, 1 -> stochastic collocations, pdf: 0 -> normal, 1 -> uniform" << std::endl;
-        }
+        std::cout << "Unknown combitation; Please try again!" << std::endl;
+        std::cout << "uq method: 0 -> monte carlo, 1 -> stochastic collocations, pdf: 0 -> normal, 1 -> uniform" << std::endl;
+        
     }
-
-    end_time = MPI_Wtime();
-
-    if(nprocs >= 2)
-    {
-        MPI_Reduce(&end_time, &end_time_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    }
-    else
-    {
-        end_time_max = end_time;
-    }
-
-    if(rank == 0)
-    {
-        std::cout << "Elapsed time for the UQ simulation is " << end_time_max - start_time << " seconds" << std::endl;
-    }
-
-    Simulation_Stop(eos);
-
+    
     return 0;
 }
