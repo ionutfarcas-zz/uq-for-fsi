@@ -2,11 +2,21 @@
 
 from traceback import print_exc
 from sys import argv, exit, stdout
-from numpy import random, array, linspace
+from numpy import array, linspace, mean, histogram, ones, zeros, random
 from matplotlib.pyplot import *
+from matplotlib.path import *
+from matplotlib.animation import *
+from matplotlib.patches import *
 from pylab import plot, show, hist
 from scipy.stats import norm, lognorm, chi2, t
 from statsmodels.api import qqplot, nonparametric
+
+coeff_disp_x_all = []
+coeff_forces0_all = []
+coeff_forces1_all = []
+
+fig_hist, ax_hist = subplots(3)
+fig_kde, ax_kde = subplots(3)
 
 def hermite_poly(deg, var):
 	try:
@@ -39,26 +49,43 @@ def _1d_gpc_approx(coeffs, var, size):
 			gpc_approx.append(approx)
 
 		gpc_approx = array(gpc_approx, dtype='float')
-		return gpc_approx
 
 	except:
 		print_exc(file = stdout)
 		exit(0)
 
-def get_coeffs(coeffs_file):
+	return gpc_approx
+
+# used to get the chaos expansion coefficients from coeff file
+def get_coeffs(coeff_file):
+	disp_x = 0.
+	force0 = 0.
+	force1 = 0.
+
 	displacement_x = []
 	forces0 = []
 	forces1 = []
 
+	timestep_disp_x = []
+	timestep_forces0 = []
+	timestep_forces1 = []
+
 	try:
-		with open(coeffs_file, 'r') as input_file:
+		with open(coeff_file, 'r') as input_file:
 
 			for line in input_file:
-				read_line = line.split()
+				if line.startswith("DATA") or line.startswith("Displacements0"):
+					continue
+				else:
+					line_tokens = line.split()
 
-				displacement_x.append(read_line[0])
-				forces0.append(read_line[1])
-				forces1.append(read_line[2])
+					disp_x = line_tokens[0]
+					force0 = line_tokens[1]
+					force1 = line_tokens[2]
+
+					displacement_x.append(disp_x)
+					forces0.append(force0)
+					forces1.append(force1)
 
 		displacement_x = array(displacement_x, dtype='float')
 		forces0 = array(forces0, dtype='float')
@@ -66,31 +93,113 @@ def get_coeffs(coeffs_file):
 
 		input_file.close()
 
-		return displacement_x, forces0, forces1
+		no_of_timesteps = len(displacement_x)/no_coeff
+
+		for i in range(no_of_timesteps):
+			for j in range(no_coeff):
+
+				timestep_disp_x.append(displacement_x[i + no_of_timesteps*j])
+				timestep_forces0.append(forces0[i + no_of_timesteps*j])
+				timestep_forces1.append(forces1[i + no_of_timesteps*j])
+
+			coeff_disp_x_all.append(timestep_disp_x)
+			coeff_forces0_all.append(timestep_forces0)
+			coeff_forces1_all.append(timestep_forces1)
+
+			timestep_disp_x = []
+			timestep_forces0 = []
+			timestep_forces1 = []
+
 
 	except IOError:
 		print_exc(file = stdout)
 		exit(0)
 
-if __name__ == "__main__":
 
-	if len(argv) != 6:
-		print "Error in " + argv[0] + "!"
-		print "Usage: " + argv[0] + " coeffs_file mean stddev no_rand_vars qq_distr"
-		exit(0)
-	
-	coeffs_file = argv[1]
-	m = float(argv[2])
-	s = float(argv[3])
-	no_rand_vars = int(argv[4])
-	qq_distr = argv[5]
+def init_hist(data, i):
+	n, bins = histogram(data)
 
-	coeff_disp_x, coeff_f0, coeff_f1 = get_coeffs(coeffs_file)
-	rand_vars = random.normal(m, s, no_rand_vars)
+	left = array(bins[:-1])
+	right = array(bins[1:])
+	bottom = zeros(len(left))
+	top = bottom + n
+	nrects = len(left)
+
+	nverts = nrects*(1+3+1)
+	verts = zeros((nverts, 2))
+	codes = ones(nverts, int) * Path.LINETO
+	codes[0::5] = Path.MOVETO
+	codes[4::5] = Path.CLOSEPOLY
+	verts[0::5,0] = left
+	verts[0::5,1] = bottom
+	verts[1::5,0] = left
+	verts[1::5,1] = top
+	verts[2::5,0] = right
+	verts[2::5,1] = top
+	verts[3::5,0] = right
+	verts[3::5,1] = bottom
+
+	barpath = Path(verts, codes)
+	patch = PathPatch(barpath, facecolor='green', edgecolor='yellow', alpha=0.5)
+	ax_hist[i].add_patch(patch)
+
+	ax_hist[i].set_xlim(left[0], right[-1])
+	ax_hist[i].set_ylim(bottom.min(), top.max())
+
+	ax_hist[i].grid()
+
+	return top, bottom, verts
+
+def init_kde():
+	line1, = ax_kde[0].plot([], [], 'r', label="pdf x displacement")
+	line2, = ax_kde[1].plot([], [], 'r', label="pdf force x")
+	line3, = ax_kde[2].plot([], [], 'r', label="pdf force y")
+
+	ax_kde[0].set_title('pdf approximation of x displacement using KDE')
+	ax_kde[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_kde[0].legend(loc="upper right", fancybox=True)
+	ax_kde[0].grid()
+
+	ax_kde[1].set_title('pdf approximation of force x using KDE')
+	ax_kde[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_kde[1].legend(loc="upper right", fancybox=True)
+	ax_kde[1].grid()
+
+	ax_kde[2].set_title('pdf approximation of force y using KDE')
+	ax_kde[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_kde[2].legend(loc="upper right", fancybox=True)
+	ax_kde[2].grid()
+
+	return line1, line2, line3
+
+def animate_hist(i):
+	displacement_x = _1d_gpc_approx(coeff_disp_x_all[i], rand_vars, no_rand_vars)
+	forces0 = _1d_gpc_approx(coeff_forces0_all[i], rand_vars, no_rand_vars)
+	forces1 = _1d_gpc_approx(coeff_forces1_all[i], rand_vars, no_rand_vars)
 	
-	displacement_x = _1d_gpc_approx(coeff_disp_x, rand_vars, no_rand_vars)
-	forces0 = _1d_gpc_approx(coeff_f0, rand_vars, no_rand_vars)
-	forces1 = _1d_gpc_approx(coeff_f1, rand_vars, no_rand_vars)
+	timestep_disp_x = array(displacement_x, dtype='float')
+	n, bins = np.histogram(timestep_disp_x)
+	top_disp_x = bottom_disp_x + n
+	verts_disp_x[1::5,1] = top_disp_x
+	verts_disp_x[2::5,1] = top_disp_x
+
+	timestep_forces0 = array(forces0, dtype='float')
+	n, bins = np.histogram(timestep_forces0)
+	top_forces0 = bottom_forces0 + n
+	verts_forces0[1::5,1] = top_forces0
+	verts_forces0[2::5,1] = top_forces0
+
+	timestep_forces1 = array(forces1, dtype='float')
+	n, bins = np.histogram(timestep_forces1)
+	top_forces1 = bottom_forces1 + n
+	verts_forces1[1::5,1] = top_forces1
+	verts_forces1[2::5,1] = top_forces1
+
+
+def animate_kde(i):
+	displacement_x = _1d_gpc_approx(coeff_disp_x_all[i], rand_vars, no_rand_vars)
+	forces0 = _1d_gpc_approx(coeff_forces0_all[i], rand_vars, no_rand_vars)
+	forces1 = _1d_gpc_approx(coeff_forces1_all[i], rand_vars, no_rand_vars)
 
 	disp_x_pdf = nonparametric.KDEUnivariate(displacement_x)
 	disp_x_pdf.fit(kernel="gau")
@@ -99,75 +208,47 @@ if __name__ == "__main__":
 	forces1_pdf = nonparametric.KDEUnivariate(forces1)
 	forces1_pdf.fit(kernel="gau")
 
-	# plot results: histogram, kde estimation, qqplot
+	ax_kde[0].clear()
+	ax_kde[1].clear()
+	ax_kde[2].clear()
+	line1, = ax_kde[0].plot(disp_x_pdf.support, disp_x_pdf.density)
+	line2, = ax_kde[1].plot(forces0_pdf.support, forces0_pdf.density)
+	line3, = ax_kde[2].plot(forces1_pdf.support, forces1_pdf.density)
 
-	# histogram
-	f1, axarr1 = subplots(3)
+	return line1, line2, line3
 
-	axarr1[0].hist(displacement_x, normed=0, alpha=.3, label="x displacement") # histogram
-	axarr1[0].set_title('histogram of x displacement using KDE')
-	axarr1[0].autoscale(enable=True, axis=u'both', tight=True)
-	axarr1[0].legend(loc="upper right", fancybox=True)
-	axarr1[0].grid()
+if __name__ == "__main__":
 
-	axarr1[1].hist(forces0, normed=0, alpha=.3, label="force x") # histogram
-	axarr1[1].set_title('histogram of force 0 using KDE')
-	axarr1[1].autoscale(enable=True, axis=u'both', tight=True)
-	axarr1[1].legend(loc="upper right", fancybox=True)
-	axarr1[1].grid()
+	if len(argv) != 6:
+		print "Error in " + argv[0] + "!"
+		print "Usage: " + argv[0] + " coeffs_file mean stddev no_rand_vars no_coeff"
+		exit(0)
+	
+	coeffs_file = argv[1]
+	m = float(argv[2])
+	s = float(argv[3])
+	no_rand_vars = int(argv[4])
+	no_coeff = int(argv[5])
 
-	axarr1[2].hist(forces1, normed=0, alpha=.3, label="force y") # histogram
-	axarr1[2].set_title('histogram of forces1 using KDE')
-	axarr1[2].autoscale(enable=True, axis=u'both', tight=True)
-	axarr1[2].legend(loc="upper right", fancybox=True)
-	axarr1[2].grid()	
+	rand_vars = random.normal(m, s, no_rand_vars)
 
-	show()
-	fig1_name = 'SCS_histogram_' + str(no_rand_vars) + '.png'
-	f1.savefig(fig1_name)
+	get_coeffs(coeffs_file)
+	no_of_timesteps = len(coeff_disp_x_all)
 
-	figure
+	displacement_x = _1d_gpc_approx(coeff_disp_x_all[0], rand_vars, no_rand_vars)
+	forces0 = _1d_gpc_approx(coeff_forces0_all[0], rand_vars, no_rand_vars)
+	forces1 = _1d_gpc_approx(coeff_forces1_all[0], rand_vars, no_rand_vars)
 
-	f2, axarr2 = subplots(3)
+	top_disp_x, bottom_disp_x, verts_disp_x = init_hist(displacement_x, 0)
+	top_forces0, bottom_forces0, verts_forces0 = init_hist(forces0, 1)
+	top_forces1, bottom_forces1, verts_forces1 = init_hist(forces1, 2)
 
-	axarr2[0].plot(disp_x_pdf.support, disp_x_pdf.density, 'r', label="pdf x displacement") # distribution function
-	axarr2[0].set_title('pdf approximation of x displacement using KDE')
-	axarr2[0].autoscale(enable=True, axis=u'both', tight=True)
-	axarr2[0].legend(loc="upper right", fancybox=True)
-	axarr2[0].grid()
+	ani_hist = FuncAnimation(fig_hist, animate_hist, init_func = None, frames=no_of_timesteps, interval = 500, repeat=False)
+	ani_hist_name = 'SCS_hist_' + str(no_coeff) + '_' + str(no_of_timesteps) + '_' + str(no_rand_vars) + '.gif'
+	ani_hist.save(ani_hist_name, writer='imagemagick')
 
-	axarr2[1].plot(forces0_pdf.support, forces0_pdf.density, 'r', label="pdf force x") # distribution function
-	axarr2[1].set_title('pdf approximation of force 0 using KDE')
-	axarr2[1].autoscale(enable=True, axis=u'both', tight=True)
-	axarr2[1].legend(loc="upper right", fancybox=True)
-	axarr2[1].grid()
-
-	axarr2[2].plot(forces1_pdf.support, forces1_pdf.density, 'r', label="pdf force y") # distribution function
-	axarr2[2].set_title('pdf approximation of forces1 using KDE')
-	axarr2[2].autoscale(enable=True, axis=u'both', tight=True)
-	axarr2[2].legend(loc="upper right", fancybox=True)
-	axarr2[2].grid()	
+	ani_kde_name = 'SCS_kde_' + str(no_coeff) + '_' + str(no_of_timesteps) + '_' + str(no_rand_vars) + '.gif'
+	ani_kde = FuncAnimation(fig_kde, animate_kde, init_func = init_kde, frames=no_of_timesteps, interval = 500, blit = True, repeat = False)
+	ani_kde.save(ani_kde_name, writer='imagemagick')
 
 	show()
-	fig2_name = 'SCS_pdf_estimation_' + str(no_rand_vars) + '.png'
-	f2.savefig(fig2_name)
-
-	fig3 = figure
-
-	# qq plot
-	f3, axarr3 = subplots(3)
-
-	suptitle_name = 'QQ plot of KDE approximated PDF using ' +  str(qq_distr) + ' distribution'
-	suptitle(suptitle_name)
-
-	qqplot(disp_x_pdf.density, qq_distr, line = '45', fit = True, ax = axarr3[0])
-	axarr3[0].grid()
-
-	qqplot(forces0_pdf.density, qq_distr, line = '45', fit = True, ax = axarr3[1])
-	axarr3[1].grid()
-
-	qqplot(forces1_pdf.density, qq_distr, line = '45', fit = True, ax = axarr3[2])
-	axarr3[2].grid()
-
-	show()
-	f3.savefig('SCS_qq_plot.png')

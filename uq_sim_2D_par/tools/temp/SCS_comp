@@ -1,0 +1,176 @@
+#!/usr/bin/env python
+
+# script used for getting the quantities of interest (qoi) out of the collective 
+# datafile and plot them; for the current setting, the qoi are the displacement
+# on the x axis and force 0 and force 1
+
+from os import rename, remove
+from sys import argv, exit, stdout
+from traceback import print_exc
+from matplotlib.pyplot import *
+from pylab import plot, show
+import numpy as np
+
+# parse coeff file
+def parse_coeff_file(datafile, no_of_coeff):
+
+	mean_disp_x_all = []
+	var_disp_x_all = []
+	mean_f0_all = []
+	var_f0_all = []
+	mean_f1_all = []
+	var_f1_all = []
+
+	displacement_x = []
+	forces0 = []
+	forces1 = []
+
+	timestep_disp_x = []
+	timestep_forces0 = []
+	timestep_forces1 = []
+
+	m_disp_x = 0.
+	var_disp_x = 0.
+	m_f0_x = 0.
+	var_f0_x = 0.
+	m_f1_x = 0.
+	var_f1_x = 0.
+
+	try:
+		with open(datafile, 'r') as input_file:
+			for line in input_file:
+
+					line_tokens = line.split()
+
+					displacement_x.append(line_tokens[0])
+					forces0.append(line_tokens[1])
+					forces1.append(line_tokens[2])
+
+			displacement_x = np.array(displacement_x)
+			displacement_x = displacement_x.astype(np.float)
+			forces0 = np.array(forces0)
+			forces0 = forces0.astype(np.float)
+			forces1 = np.array(forces1)
+			forces1 = forces1.astype(np.float)
+
+			no_of_timesteps = len(displacement_x)/no_of_coeff
+
+			for i in range(no_of_timesteps):
+				for j in range(no_of_coeff):
+
+					timestep_disp_x.append(displacement_x[i*no_of_coeff + j])
+					timestep_forces0.append(forces0[i*no_of_coeff + j])
+					timestep_forces1.append(forces1[i*no_of_coeff + j])
+
+				timestep_disp_x = np.array(timestep_disp_x)
+				timestep_disp_x = timestep_disp_x.astype(np.float)
+				timestep_forces0 = np.array(timestep_forces0)
+				timestep_forces0 = timestep_forces0.astype(np.float)
+				timestep_forces1 = np.array(timestep_forces1)
+				timestep_forces1 = timestep_forces1.astype(np.float)
+
+				m_disp_x = timestep_disp_x[0]
+				var_disp_x = np.sum(coeff**2 for coeff in timestep_disp_x) - m_disp_x**2
+				m_f0 = timestep_forces0[0]
+				var_f0 = np.sum(coeff**2 for coeff in timestep_forces0) - m_f0**2
+				m_f1 = timestep_forces1[0]
+				var_f1 = np.sum(coeff**2 for coeff in timestep_forces1) - m_f1**2
+
+				mean_disp_x_all.append(m_disp_x)
+				var_disp_x_all.append(var_disp_x)
+				mean_f0_all.append(m_f0)
+				var_f0_all.append(var_f0)
+				mean_f1_all.append(m_f1)
+				var_f1_all.append(var_f1)
+
+				timestep_disp_x = []
+				timestep_forces0 = []
+				timestep_forces1 = []
+
+		input_file.close()
+		
+	except IOError:
+		print_exc(file = stdout)
+		exit(0)
+
+	return mean_disp_x_all, var_disp_x_all, mean_f0_all, var_f0_all, mean_f1_all, var_f1_all
+
+def diff_plot():
+	fig_mean, ax_mean = subplots(3)
+	fig_var, ax_var = subplots(3)
+
+	x_axis = np.linspace(0, no_of_timesteps, no_of_timesteps)
+
+	ax_mean[0].plot(x_axis, mean_disp_x_all_1, 'r--', label="sim1 x displacement", linewidth=2.0)
+	ax_mean[0].plot(x_axis, mean_disp_x_all_2, 'g-.', label="sim2 x displacement", linewidth=2.0)
+	ax_mean[0].set_ylabel('Mean of the x displacement')
+	ax_mean[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_mean[0].legend(loc="upper right", fancybox=True)
+	ax_mean[0].grid()
+	ax_mean[0].set_xlabel('no. of time steps')
+
+	ax_mean[1].plot(x_axis, mean_f0_all_1, 'r--', label="sim1 x force", linewidth=2.0)
+	ax_mean[1].plot(x_axis, mean_f0_all_2, 'g-.', label="sim2 x force", linewidth=2.0)
+	ax_mean[1].set_ylabel('Mean of the x force')
+	ax_mean[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_mean[1].legend(loc="upper right", fancybox=True)
+	ax_mean[1].grid()
+	ax_mean[1].set_xlabel('no. of time steps')
+
+	ax_mean[2].plot(x_axis, mean_f1_all_1, 'r--', label="sim1 y force", linewidth=2.0)
+	ax_mean[2].plot(x_axis, mean_f1_all_2, 'g-.', label="sim2 y force", linewidth=2.0)
+	ax_mean[2].set_ylabel('Mean of the y force')
+	ax_mean[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_mean[2].legend(loc="upper right", fancybox=True)
+	ax_mean[2].grid()
+	ax_mean[2].set_xlabel('no. of time steps')
+
+	fig_mean.savefig('Mean comparison for SCS.png')
+
+
+	ax_var[0].plot(x_axis, var_disp_x_all_1, 'r--', label="sim1 x displacement", linewidth=2.0)
+	ax_var[0].plot(x_axis, var_disp_x_all_2, 'g-.', label="sim2 x displacement", linewidth=2.0)
+	ax_var[0].set_ylabel('Var of the x displacement')
+	ax_var[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_var[0].legend(loc="upper right", fancybox=True)
+	ax_var[0].grid()
+	ax_var[0].set_xlabel('no. of time steps')
+
+	ax_var[1].plot(x_axis, var_f0_all_1, 'r--', label="sim1 x force", linewidth=2.0)
+	ax_var[1].plot(x_axis, var_f0_all_2, 'g-.', label="sim2 x force", linewidth=2.0)
+	ax_var[1].set_ylabel('Var of the x force')
+	ax_var[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_var[1].legend(loc="upper right", fancybox=True)
+	ax_var[1].grid()
+	ax_var[1].set_xlabel('no. of time steps')
+
+	ax_var[2].plot(x_axis, var_f1_all_1, 'r--', label="sim1 y force", linewidth=2.0)
+	ax_var[2].plot(x_axis, var_f1_all_2, 'g-.', label="sim2 y force", linewidth=2.0)
+	ax_var[2].set_ylabel('Var of the y force')
+	ax_var[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_var[2].legend(loc="upper right", fancybox=True)
+	ax_var[2].grid()
+	ax_var[2].set_xlabel('no. of time steps')
+
+	fig_var.savefig('Variance comparison for SCS.png')
+
+	show()
+
+if __name__ == "__main__":
+
+	if len(argv) != 5:
+		print "Error in " + argv[0] + "!"
+		print "Usage: " + argv[0] + " datafile1 datafile2 no_of_coeff1 no_of_coeff2"
+		exit(0)
+
+	datafile1 = argv[1]
+	datafile2 = argv[2]
+	no_of_coeff1 = int(argv[3])
+	no_of_coeff2 = int(argv[4])
+
+	mean_disp_x_all_1, var_disp_x_all_1, mean_f0_all_1, var_f0_all_1, mean_f1_all_1, var_f1_all_1 = parse_coeff_file(datafile1, no_of_coeff1)
+	mean_disp_x_all_2, var_disp_x_all_2, mean_f0_all_2, var_f0_all_2, mean_f1_all_2, var_f1_all_2 = parse_coeff_file(datafile2, no_of_coeff2)
+
+	no_of_timesteps = len(mean_disp_x_all_1)
+
+	diff_plot()

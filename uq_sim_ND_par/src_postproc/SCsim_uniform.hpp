@@ -305,7 +305,7 @@ public:
 			std::vector<double> force0;
 			std::vector<double> force1;	
 
-			get_alya_output = run_gather_alya_output(gather_alya_output, i+1);
+			get_alya_output = run_gather_alya_output(gather_alya_output, i);
 			gather_alya_output_ok = system(get_alya_output.c_str());
 			assert(gather_alya_output_ok >=0);
 

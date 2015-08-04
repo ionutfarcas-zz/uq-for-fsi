@@ -1,22 +1,21 @@
 #!/bin/bash
 
-if [ $# -eq 1 ]; 
+if [ $# -eq 1 ];
 then
-	if [ -d "../../alya_output/nastin_$1" ]; 
-	then
-		rm -r ../../alya_output/nastin_$1	
-	fi
-	mkdir ../../alya_output/nastin_$1
-	cp -r ../../nastin/*.post.* ../../alya_output/nastin_$1 
+        if [ -d "../../alya_output/nastin_$1" ];
+        then
+                rm -r ../../alya_output/nastin_$1
+        fi
+        mkdir ../../alya_output/nastin_$1
+        mv ../../simulation_$1/nastin_$1/*.post.* ../../alya_output/nastin_$1
 
-	if [ -d "../../alya_output/solidz_$1" ]; 
-	then
-		rm -r ../../alya_output/solidz_$1
-	fi
-	mkdir ../../alya_output/solidz_$1
-	cp -r ../../solidz/*.post.* ../../alya_output/solidz_$1
+        if [ -d "../../alya_output/solidz_$1" ];
+        then
+                rm -r ../../alya_output/solidz_$1
+        fi
+        mkdir ../../alya_output/solidz_$1
+        mv ../../simulation_$1/solidz_$1/*.post.* ../../alya_output/solidz_$1
 else
-	echo "Error when using $0!"
-	echo "Correct usage: $0 simulation_no"
+        echo "Error when using $0!"
+        echo "Correct usage: $0 simulation_no"
 fi
-

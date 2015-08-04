@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ $# -eq 1 ];
+then
+        for i in `seq 1 $1`;
+        do
+                let new_i=$i-1
+                ../tools/alya_run/runs $new_i
+        done
+else
+        echo "Error when using $0!"
+        echo "Correct usage: $0 sim_no"
+fi
