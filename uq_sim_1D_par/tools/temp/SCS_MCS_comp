@@ -11,9 +11,44 @@ from matplotlib.pyplot import *
 from pylab import plot, show
 import numpy as np
 
-# parse coeff file
-def parse_coeff_file(datafile, no_of_coeff):
+# parse sc coeff file
+def parse_mc_file(datafile):
+	data_all = []
 
+	mean_disp_x_all = []
+	var_disp_x_all = []
+	mean_f0_all = []
+	var_f0_all = []
+	mean_f1_all = []
+	var_f1_all = []
+
+	try:
+		with open(datafile, 'r') as input_file:
+			for line in input_file:
+
+					line_tokens = line.split()
+					if len(line_tokens) !=0:
+						data_all.append(line_tokens[-1])
+
+		input_file.close()
+
+		no_of_timesteps = len(data_all)/6
+
+		for i in range(no_of_timesteps):
+			mean_disp_x_all.append(float(data_all[i*6]))
+			var_disp_x_all.append(float(data_all[i*6 + 1]))
+			mean_f0_all.append(float(data_all[i*6 + 2]))
+			var_f0_all.append(float(data_all[i*6 + 3]))
+			mean_f1_all.append(float(data_all[i*6 + 4]))
+			var_f1_all.append(float(data_all[i*6 + 5]))
+
+	except IOError:
+		print_exc(file = stdout)
+		exit(0)
+
+	return mean_disp_x_all, var_disp_x_all, mean_f0_all, var_f0_all, mean_f1_all, var_f1_all
+
+def parse_sc_file(datafile, no_of_coeff):
 	mean_disp_x_all = []
 	var_disp_x_all = []
 	mean_f0_all = []
@@ -154,8 +189,8 @@ def diff_plot():
 
 	show()
 
-	fig_mean.savefig("sc_mean_" + datafile1.split('.')[1] + "_" + datafile1.split('.')[1] + ".png")
-	fig_var.savefig("sc_var_" + datafile1.split('.')[1] + "_" + datafile1.split('.')[1] + ".png")
+	fig_mean.savefig("mc_sc_mean_" + datafile1.split('.')[1] + "_" + datafile1.split('.')[1] + ".png")
+	fig_var.savefig("mc_sc_var_" + datafile1.split('.')[1] + "_" + datafile1.split('.')[1] + ".png")
 
 def err_plot():
 	fig_err_mean, ax_err_mean = subplots(3)
@@ -219,23 +254,22 @@ def err_plot():
 
 	show()
 
-	fig_err_mean.savefig("sc_mean_abs_err_" + datafile1.split('.')[1] + "_" + datafile1.split('.')[1] + ".png")
-	fig_err_var.savefig("sc_var_abs_err_" + datafile1.split('.')[1] + "_" + datafile1.split('.')[1] + ".png")
+	fig_err_mean.savefig("mc_sc_mean_abs_err_" + datafile1.split('.')[1] + "_" + datafile1.split('.')[1] + ".png")
+	fig_err_var.savefig("mc_sc_var_abs_err_" + datafile1.split('.')[1] + "_" + datafile1.split('.')[1] + ".png")
 	
 if __name__ == "__main__":
 
-	if len(argv) != 5:
+	if len(argv) != 4:
 		print "Error in " + argv[0] + "!"
-		print "Usage: " + argv[0] + " datafile1 datafile2 no_of_coeff1 no_of_coeff2"
+		print "Usage: " + argv[0] + " datafile_sc datafile_mc no_of_coeff_sc"
 		exit(0)
 
 	datafile1 = argv[1]
 	datafile2 = argv[2]
-	no_of_coeff1 = int(argv[3])
-	no_of_coeff2 = int(argv[4])
+	no_of_coeff_sc = int(argv[3])
 
-	mean_disp_x_all_1, var_disp_x_all_1, mean_f0_all_1, var_f0_all_1, mean_f1_all_1, var_f1_all_1 = parse_coeff_file(datafile1, no_of_coeff1)
-	mean_disp_x_all_2, var_disp_x_all_2, mean_f0_all_2, var_f0_all_2, mean_f1_all_2, var_f1_all_2 = parse_coeff_file(datafile2, no_of_coeff2)
+	mean_disp_x_all_1, var_disp_x_all_1, mean_f0_all_1, var_f0_all_1, mean_f1_all_1, var_f1_all_1 = parse_sc_file(datafile1, no_of_coeff_sc)
+	mean_disp_x_all_2, var_disp_x_all_2, mean_f0_all_2, var_f0_all_2, mean_f1_all_2, var_f1_all_2 = parse_mc_file(datafile2)
 
 	no_of_timesteps = len(mean_disp_x_all_1)
 
