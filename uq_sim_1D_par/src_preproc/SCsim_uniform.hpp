@@ -42,7 +42,11 @@ public:
 		const double& _nu_f_p1, 
 		const double& _nu_f_p2, 
 		const double& _rho_s_p1, 
-		const double& _rho_s_p2)
+		const double& _rho_s_p2,
+		const double& _E_s_p1,
+    	const double& _E_s_p2,
+    	const double& _nu_s_p1,
+    	const double& _nu_s_p2)
 	{
 		ncoeff = _ncoeff;
 		quad_degree = _quad_degree;
@@ -115,7 +119,7 @@ public:
 			
 			temp = (nu_f_p2 - nu_f_p1)/2.0*pre_proc_result[i] + (nu_f_p2 + nu_f_p1)/2.0;
 			assert(temp >= 0);
-			modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, temp, i);
+			modify_nastin_data = run_insert_nastin_vis(insert_nastin_exec, nastin_dat, temp, i);
 			modify_nastin_data_ok = system(modify_nastin_data.c_str());
 			assert(modify_nastin_data_ok >= 0);
 		}

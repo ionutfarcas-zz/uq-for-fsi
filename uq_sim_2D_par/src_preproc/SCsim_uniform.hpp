@@ -141,7 +141,11 @@ public:
 		const double& _nu_f_p1, 
 		const double& _nu_f_p2, 
 		const double& _rho_s_p1, 
-		const double& _rho_s_p2)
+		const double& _rho_s_p2,
+		const double& _E_s_p1,
+    	const double& _E_s_p2,
+    	const double& _nu_s_p1,
+    	const double& _nu_s_p2) 
 	{
 		ncoeff = _ncoeff;
 		quad_degree = _quad_degree;
@@ -174,6 +178,10 @@ public:
 		nu_f_p2 = _nu_f_p2;
 		rho_s_p1 = _rho_s_p1;
 		rho_s_p2 = _rho_s_p2;
+		E_s_p1 = _E_s_p1;
+		E_s_p2 = _E_s_p2;
+		nu_s_p1 = _nu_s_p1;
+		nu_s_p2 = _nu_s_p2;
 	}
 
 	virtual void pre_processing(vec2d_double& nodes, vec2d_double& weights) const
@@ -277,13 +285,13 @@ public:
 
 			temp_nu_f = (0.5*nodes[0][i] + 0.5)*nu_f_p2 + nu_f_p1;
 			assert(temp_nu_f >= 0);
-			modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, temp_nu_f, i);
+			modify_nastin_data = run_insert_nastin_vis(insert_nastin_exec, nastin_dat, temp_nu_f, i);
 			modify_nastin_data_ok = system(modify_nastin_data.c_str());
 			assert(modify_nastin_data_ok >= 0);
 			
 			temp_rho_s = (0.5*nodes[1][i] + 0.5)*rho_s_p2 + rho_s_p1;
 			assert(temp_rho_s >= 0);
-			modify_solidz_data = run_insert_solidz_1d(insert_solidz_exec, solidz_dat, temp_rho_s, i);
+			modify_solidz_data = run_insert_solidz_dens(insert_solidz_exec, solidz_dat, temp_rho_s, i);
 			modify_solidz_data_ok = system(modify_solidz_data.c_str());
 			assert(modify_solidz_data_ok >= 0);
 		}

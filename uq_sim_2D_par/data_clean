@@ -12,6 +12,18 @@ else
 	echo "data_results/SCS/ is alread empty!"
 fi
 
+if [ "$(ls -A postprocessing_results/SCS)" ]; then
+	rm postprocessing_results/SCS/*
+else
+	echo "postprocessing_results/SCS/ is alread empty!"
+fi
+
+if [ "$(ls -A postprocessing_results/MCS)" ]; then
+	rm postprocessing_results/MCS/*
+else
+	echo "postprocessing_results/MCS/ is alread empty!"
+fi
+
 if [ "$(ls -A ../alya_output/)" ]; then
 	rm -r ../alya_output/*
 else

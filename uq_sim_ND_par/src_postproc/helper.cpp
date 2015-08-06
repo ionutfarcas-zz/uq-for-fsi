@@ -16,7 +16,7 @@ T str_to_number(const std::string& no)
 	return value;
 }
 
-std::string run_insert_nastin_1d(const std::string nastin_exec, std::string nastin_data, 
+std::string run_insert_nastin_vis(const std::string nastin_exec, std::string nastin_data, 
 	double& new_viscosity, int point)
 {
 	std::string delimiter = "/";
@@ -49,7 +49,40 @@ std::string run_insert_nastin_1d(const std::string nastin_exec, std::string nast
 	return caller.str();
 }
 
-std::string run_insert_nastin_2d(const std::string nastin_exec, std::string nastin_data, 
+std::string run_insert_nastin_dens(const std::string nastin_exec, std::string nastin_data, 
+	double& new_density, int point)
+{
+	std::string delimiter = "/";
+	std::string token;
+	std::string new_nastin_data;
+	std::string insert_point = "_" + std::to_string(point);
+	size_t pos = 0;
+	int iter = 0;
+
+	std::stringstream caller;
+
+	while ((pos = nastin_data.find(delimiter)) != std::string::npos) 
+	{
+		token = nastin_data.substr(0, pos);
+		new_nastin_data += token;
+		
+		if(iter == 2 || iter == 3)
+		{
+			new_nastin_data += insert_point;
+		}
+
+		new_nastin_data += delimiter;
+		nastin_data.erase(0, pos + delimiter.length());
+		++iter;
+	}
+
+	new_nastin_data += nastin_data;
+	caller << nastin_exec << " " << new_nastin_data << " " << new_density;
+
+	return caller.str();
+}
+
+std::string run_insert_nastin_vis_dens(const std::string nastin_exec, std::string nastin_data, 
 	double& new_density, double& new_viscosity, int point)
 {
 	std::string delimiter = "/";
@@ -82,7 +115,7 @@ std::string run_insert_nastin_2d(const std::string nastin_exec, std::string nast
 	return caller.str();
 }
 
-std::string run_insert_solidz_1d(const std::string solidz_exec, std::string solidz_data, 
+std::string run_insert_solidz_dens(const std::string solidz_exec, std::string solidz_data, 
 	double& new_density, int point)
 {
 	std::string delimiter = "/";
@@ -111,6 +144,72 @@ std::string run_insert_solidz_1d(const std::string solidz_exec, std::string soli
 
 	new_solidz_data += solidz_data;
 	caller << solidz_exec << " " << new_solidz_data << " " << new_density;
+
+	return caller.str();
+}
+
+std::string run_insert_solidz_youngm(const std::string solidz_exec, std::string solidz_data, 
+	double& new_youngm, int point)
+{
+	std::string delimiter = "/";
+	std::string token;
+	std::string new_solidz_data;
+	std::string insert_point = "_" + std::to_string(point);
+	size_t pos = 0;
+	int iter = 0;
+
+	std::stringstream caller;
+
+	while ((pos = solidz_data.find(delimiter)) != std::string::npos) 
+	{
+		token = solidz_data.substr(0, pos);
+		new_solidz_data += token;
+		
+		if(iter == 2 || iter == 3)
+		{
+			new_solidz_data += insert_point;
+		}
+
+		new_solidz_data += delimiter;
+		solidz_data.erase(0, pos + delimiter.length());
+		++iter;
+	}
+
+	new_solidz_data += solidz_data;
+	caller << solidz_exec << " " << new_solidz_data << " " << new_youngm;
+
+	return caller.str();
+}
+
+std::string run_insert_solidz_poissonr(const std::string solidz_exec, std::string solidz_data, 
+	double& new_poissonr, int point)
+{
+	std::string delimiter = "/";
+	std::string token;
+	std::string new_solidz_data;
+	std::string insert_point = "_" + std::to_string(point);
+	size_t pos = 0;
+	int iter = 0;
+
+	std::stringstream caller;
+
+	while ((pos = solidz_data.find(delimiter)) != std::string::npos) 
+	{
+		token = solidz_data.substr(0, pos);
+		new_solidz_data += token;
+		
+		if(iter == 2 || iter == 3)
+		{
+			new_solidz_data += insert_point;
+		}
+
+		new_solidz_data += delimiter;
+		solidz_data.erase(0, pos + delimiter.length());
+		++iter;
+	}
+
+	new_solidz_data += solidz_data;
+	caller << solidz_exec << " " << new_solidz_data << " " << new_poissonr;
 
 	return caller.str();
 }
@@ -402,7 +501,11 @@ int parse_configfile(const std::string& config_file_name,
 	double& nu_f_p1,
 	double& nu_f_p2,
 	double& rho_s_p1,
-	double& rho_s_p2)
+	double& rho_s_p2,
+	double& E_s_p1,
+	double& E_s_p2,
+	double& nu_s_p1,
+	double& nu_s_p2)
 {
 	std::ifstream config_file;
 	std::string line, token_1, token_2, token_3;
@@ -542,6 +645,22 @@ int parse_configfile(const std::string& config_file_name,
 			else if(token_1.compare("rho_s_p2") == 0)
 			{
 				rho_s_p2 = str_to_number<double>(token_3);
+			}
+			else if(token_1.compare("E_s_p1") == 0)
+			{
+				E_s_p1 = str_to_number<double>(token_3);
+			}
+			else if(token_1.compare("E_s_p2") == 0)
+			{
+				E_s_p2 = str_to_number<double>(token_3);
+			}
+			else if(token_1.compare("nu_s_p1") == 0)
+			{
+				nu_s_p1 = str_to_number<double>(token_3);
+			}
+			else if(token_1.compare("nu_s_p2") == 0)
+			{
+				nu_s_p2 = str_to_number<double>(token_3);
 			}
 			else
 			{

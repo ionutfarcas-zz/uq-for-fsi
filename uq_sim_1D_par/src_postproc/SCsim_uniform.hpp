@@ -41,7 +41,11 @@ public:
 		const double& _nu_f_p1, 
 		const double& _nu_f_p2, 
 		const double& _rho_s_p1, 
-		const double& _rho_s_p2)
+		const double& _rho_s_p2,
+		const double& _E_s_p1,
+    	const double& _E_s_p2,
+    	const double& _nu_s_p1,
+    	const double& _nu_s_p2) 
 	{
 		ncoeff = _ncoeff;
 		quad_degree = _quad_degree;
@@ -67,6 +71,10 @@ public:
 		nu_f_p2 = _nu_f_p2;
 		rho_s_p1 = _rho_s_p1;
 		rho_s_p2 = _rho_s_p2;
+		E_s_p1 = _E_s_p1;
+		E_s_p2 = _E_s_p2;
+		nu_s_p1 = _nu_s_p1;
+		nu_s_p2 = _nu_s_p2;
 	}
 
 	virtual std::vector<double> pre_processing() const

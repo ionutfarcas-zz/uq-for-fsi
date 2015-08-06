@@ -192,7 +192,11 @@ public:
 		const double& _nu_f_p1, 
 		const double& _nu_f_p2, 
 		const double& _rho_s_p1, 
-		const double& _rho_s_p2)
+		const double& _rho_s_p2,
+		const double& _E_s_p1,
+    	const double& _E_s_p2,
+    	const double& _nu_s_p1,
+    	const double& _nu_s_p2) 
 	{
 		i_ncoeff = _ncoeff;
 		i_dim = _prob_dim;
@@ -219,6 +223,10 @@ public:
 		nu_f_p2 = _nu_f_p2;
 		rho_s_p1 = _rho_s_p1;
 		rho_s_p2 = _rho_s_p2;
+		E_s_p1 = _E_s_p1;
+		E_s_p2 = _E_s_p2;
+		nu_s_p1 = _nu_s_p1;
+		nu_s_p2 = _nu_s_p2;
 
 		for(int i = 0 ; i < i_dim ; ++i)
 		{
@@ -306,11 +314,11 @@ public:
 
 			temp_nu_f =  sqrt(2)*pre_proc_result[i][0]*nu_f_p2 + nu_f_p1;
 			assert(temp_nu_f >= 0);
-			modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, temp_nu_f, i);
+			modify_nastin_data = run_insert_nastin_vis(insert_nastin_exec, nastin_dat, temp_nu_f, i);
 
 			temp_rho_s = sqrt(2)*pre_proc_result[i][1]*rho_s_p2 + rho_s_p1;
 			assert(temp_rho_s >= 0);
-			modify_solidz_data = run_insert_solidz_1d(insert_solidz_exec, solidz_dat, temp_rho_s, i);
+			modify_solidz_data = run_insert_solidz_dens(insert_solidz_exec, solidz_dat, temp_rho_s, i);
 
 			modify_nastin_data_ok = system(modify_nastin_data.c_str());
 			assert(modify_nastin_data_ok >= 0);

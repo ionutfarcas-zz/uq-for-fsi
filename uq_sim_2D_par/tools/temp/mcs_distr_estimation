@@ -193,11 +193,10 @@ if __name__ == "__main__":
 
 	ani_hist = FuncAnimation(fig_hist, animate_hist, init_func = None, frames=no_of_timesteps, interval = 500, repeat=False)
 	ani_hist_name = 'MCS_hist_' + str(no_of_timesteps) + '_' + str(no_of_simulations) + '.gif'
+	ani_hist.save(ani_hist_name, writer='imagemagick')
 
 	ani_kde = FuncAnimation(fig_kde, animate_kde, init_func = init_kde, frames=no_of_timesteps, interval = 500, blit = True, repeat = False)
 	ani_kde_name = 'MCS_pdf_est_' + str(no_of_timesteps) + '_' + str(no_of_simulations) + '.gif'
-	
-	show()
-
-	ani_hist.save(ani_hist_name, writer='imagemagick')
 	ani_kde.save(ani_kde_name, writer='imagemagick')
+
+	show()

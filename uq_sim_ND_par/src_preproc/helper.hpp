@@ -19,14 +19,23 @@ typedef std::vector<std::vector<int>> vec2d_int;
 typedef std::vector<std::vector<double>> vec2d_double;
 typedef std::vector<std::vector<SGPP::float_t>> vec2d_float_t;
 
-std::string run_insert_nastin_2d(const std::string nastin_exec, std::string nastin_data, 
-	double& new_density, double& new_viscosity, int point);
-
-std::string run_insert_nastin_1d(const std::string nastin_exec, std::string nastin_data, 
+std::string run_insert_nastin_vis(const std::string nastin_exec, std::string nastin_data, 
 	double& new_viscosity, int point);
 
-std::string run_insert_solidz_1d(const std::string solidz_exec, std::string solidz_data, 
+std::string run_insert_nastin_dens(const std::string nastin_exec, std::string nastin_data, 
 	double& new_density, int point);
+
+std::string run_insert_nastin_vis_des(const std::string nastin_exec, std::string nastin_data, 
+	double& new_density, double& new_viscosity, int point);
+
+std::string run_insert_solidz_dens(const std::string solidz_exec, std::string solidz_data, 
+	double& new_density, int point);
+
+std::string run_insert_solidz_youngm(const std::string solidz_exec, std::string solidz_data, 
+	double& new_youngm, int point);
+
+std::string run_insert_solidz_poissonr(const std::string solidz_exec, std::string solidz_data, 
+	double& new_poissonr, int point);
 
 std::string run_alya(const std::string& alya_run, const int& point);
 
@@ -86,7 +95,11 @@ int parse_configfile(const std::string& config_file_name,
 	double& nu_f_p1,
 	double& nu_f_p2,
 	double& rho_s_p1,
-	double& rho_s_p2);
+	double& rho_s_p2,
+	double& E_s_p1,
+	double& E_s_p2,
+	double& nu_s_p1,
+	double& nu_s_p2);
 
 vec2d_double get_output_data(const std::string get_output_sc, int& no_valid_lines);
 

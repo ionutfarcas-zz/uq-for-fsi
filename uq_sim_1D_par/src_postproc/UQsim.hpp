@@ -18,6 +18,10 @@ protected:
 	double nu_f_p2;
 	double rho_s_p1;
 	double rho_s_p2;
+	double E_s_p1;
+    double E_s_p2;
+    double nu_s_p1;
+    double nu_s_p2;
 	std::string nastin_dat;
 	std::string solidz_dat;
 	std::string create_data_point;

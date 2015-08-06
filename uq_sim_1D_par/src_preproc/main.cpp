@@ -37,6 +37,10 @@ int main(int argc, char** argv)
     double nu_f_p2 = 0.0;
     double rho_s_p1 = 0.0;
     double rho_s_p2 = 0.0;
+    double E_s_p1 = 0.0;
+    double E_s_p2 = 0.0;
+    double nu_s_p1 = 0.0;
+    double nu_s_p2 = 0.0;
 
     std::vector<double> pre_proc_results;
 
@@ -70,7 +74,11 @@ int main(int argc, char** argv)
         nu_f_p1, 
         nu_f_p2, 
         rho_s_p1, 
-        rho_s_p2) == 0)
+        rho_s_p2,
+        E_s_p1,
+        E_s_p2,
+        nu_s_p1,
+        nu_s_p2) == 0)
     {
     	std::cout << "Error parsing the config file!" << std::endl;
         return 0;
@@ -97,7 +105,11 @@ int main(int argc, char** argv)
             nu_f_p1, 
             nu_f_p2, 
             rho_s_p1, 
-            rho_s_p2);
+            rho_s_p2,
+            E_s_p1,
+            E_s_p2,
+            nu_s_p1,
+            nu_s_p2);
 
         pre_proc_results = mcs_n.pre_processing(nu_f_p1, nu_f_p2);
         mcs_n.simulation(pre_proc_results);
@@ -123,7 +135,11 @@ int main(int argc, char** argv)
             nu_f_p1, 
             nu_f_p2, 
             rho_s_p1, 
-            rho_s_p2);
+            rho_s_p2,
+            E_s_p1,
+            E_s_p2,
+            nu_s_p1,
+            nu_s_p2);
 
         pre_proc_results = mcs_u.pre_processing(nu_f_p1, nu_f_p2);
         mcs_u.simulation(pre_proc_results);   
@@ -152,7 +168,11 @@ int main(int argc, char** argv)
             nu_f_p1, 
             nu_f_p2, 
             rho_s_p1, 
-            rho_s_p2);
+            rho_s_p2,
+            E_s_p1,
+            E_s_p2,
+            nu_s_p1,
+            nu_s_p2);
 
         pre_proc_results = scs_n.pre_processing();
         scs_n.simulation(pre_proc_results);
@@ -181,7 +201,11 @@ int main(int argc, char** argv)
             nu_f_p1, 
             nu_f_p2, 
             rho_s_p1, 
-            rho_s_p2);
+            rho_s_p2,
+            E_s_p1,
+            E_s_p2,
+            nu_s_p1,
+            nu_s_p2);
 
         pre_proc_results = scs_u.pre_processing();
         scs_u.simulation(pre_proc_results);

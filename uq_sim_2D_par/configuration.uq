@@ -26,8 +26,8 @@ postproc_stat_exec_sc = ../tools/postprocessing/postprocessing_stat_sc
 output_file_sc = ../data_results/SCS/RightCorner.watchpoint.sc.txt
 coeff_sc = ../data_results/SCS/coeff.sc.txt
 postproc_stat_sc = ../postprocessing_results/SCS/Statistics.sc.txt
-insert_nastin_exec = ../tools/util/insert_params_nastin_1d
-insert_solidz_exec = ../tools/util/insert_params_solidz_1d
+insert_nastin_exec = ../tools/util/insert_params_nastin_dens
+insert_solidz_exec = ../tools/util/insert_params_solidz_youngm
 gather_alya_output = ../tools/postprocessing/postprocessing_alya
 #--------------------------------------------------------------------------#
 #  uq method: 0 -> monte carlo, 1 -> stochastic collocations               #
@@ -67,3 +67,13 @@ nu_f_p2 = 0.003
 #--------------------------------------------------------------------------#
 rho_s_p1 = 0.01
 rho_s_p2 = 0.001
+#--------------------------------------------------------------------------#
+#                   structure problem: Young's modulus                     #
+#--------------------------------------------------------------------------#
+E_s_p1 = 0.5e5
+E_s_p2 = 0.05e5
+#--------------------------------------------------------------------------#
+#                   structure problem: Poisson's ratio                     #
+#--------------------------------------------------------------------------#
+nu_s_p1 = 0.3
+nu_s_p2 = 0.03

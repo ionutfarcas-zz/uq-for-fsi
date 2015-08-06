@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+use autodie;
+use strict;
+use warnings qw(all);
+
+if ($#ARGV != 1 ) 
+{
+	print "Error!\nUsage: ./insert_params_solidz_1d FILE_NAME new_Poisson_ratio\n";
+	exit;
+}
+
+my $file = $ARGV[0];
+my $Poisson_r = $ARGV[1];
+
+my $Poisson_r_line = 7;
+
+@ARGV = ($file);
+$^I = "";
+
+while (<>)
+{
+    if ($. == $Poisson_r_line) 
+    {
+        my $line = "  CONSTITUTIVE_MODEL   ISOLIN 0.5e5 $Poisson_r\n";
+        print $line;
+    }
+    else
+    {
+    	print;
+    }
+}

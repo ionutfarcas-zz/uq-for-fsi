@@ -40,7 +40,11 @@ public:
 		const double& _nu_f_p1, 
 		const double& _nu_f_p2, 
 		const double& _rho_s_p1, 
-		const double& _rho_s_p2) 
+		const double& _rho_s_p2,
+		const double& _E_s_p1,
+    	const double& _E_s_p2,
+    	const double& _nu_s_p1,
+    	const double& _nu_s_p2)  
 	{
 		mean = 0.0;
 		std_dev = 1.0;
@@ -66,6 +70,10 @@ public:
 		nu_f_p2 = _nu_f_p2;
 		rho_s_p1 = _rho_s_p1;
 		rho_s_p2 = _rho_s_p2;
+		E_s_p1 = _E_s_p1;
+		E_s_p2 = _E_s_p2;
+		nu_s_p1 = _nu_s_p1;
+		nu_s_p2 = _nu_s_p2;
 	}
 
 	virtual double compute_volume() const
@@ -117,10 +125,10 @@ public:
 			rand_par_dim1 = pre_proc_result_dim1[i];
 			rand_par_dim2 = pre_proc_result_dim2[i];
 
-			modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, rand_par_dim1, i);
+			modify_nastin_data = run_insert_nastin_vis(insert_nastin_exec, nastin_dat, rand_par_dim1, i);
 			modify_nastin_data_ok = system(modify_nastin_data.c_str());
 			assert(modify_nastin_data_ok >= 0);
-			modify_solidz_data = run_insert_solidz_1d(insert_solidz_exec, solidz_dat, rand_par_dim2, i);
+			modify_solidz_data = run_insert_solidz_dens(insert_solidz_exec, solidz_dat, rand_par_dim2, i);
 			modify_solidz_data_ok= system(modify_solidz_data.c_str());
 			assert(modify_solidz_data_ok >= 0);
 		}

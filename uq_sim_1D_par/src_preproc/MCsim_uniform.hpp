@@ -40,7 +40,11 @@ public:
 		const double& _nu_f_p1, 
 		const double& _nu_f_p2, 
 		const double& _rho_s_p1, 
-		const double& _rho_s_p2) 
+		const double& _rho_s_p2,
+		const double& _E_s_p1,
+    	const double& _E_s_p2,
+    	const double& _nu_s_p1,
+    	const double& _nu_s_p2) 
 	{
 		left_param = 0.0;
 		right_param = 1.0;
@@ -104,7 +108,7 @@ public:
 
 			rand_par = pre_proc_result[i];
 
-			modify_nastin_data = run_insert_nastin_1d(insert_nastin_exec, nastin_dat, rand_par, i);
+			modify_nastin_data = run_insert_nastin_vis(insert_nastin_exec, nastin_dat, rand_par, i);
 			modify_nastin_data_ok = system(modify_nastin_data.c_str());
 			assert(modify_nastin_data_ok >= 0);
 		}

@@ -16,7 +16,6 @@ then
 
 	mkdir ../../simulation_$1/nastin_$1
 	cp -r ../../nastin/* ../../simulation_$1/nastin_$1
-	cp ../../precice-config.xml ../../simulation_$1/
 
 	if [ -d "../../simulation_$1/solidz_$1" ]; 
 	then
@@ -25,8 +24,9 @@ then
 	
 	mkdir ../../simulation_$1/solidz_$1
 	cp -r ../../solidz/* ../../simulation_$1/solidz_$1
+	
 	cp ../../precice-config.xml ../../simulation_$1/
 else
 	echo "Error when using $0!"
-	echo "Correct usage: $0 point"
+	echo "Correct usage: $0 rank"
 fi

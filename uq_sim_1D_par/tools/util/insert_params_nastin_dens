@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+use autodie;
+use strict;
+use warnings qw(all);
+
+if ($#ARGV != 1 ) 
+{
+	print "Error!\nUsage: ./insert_params_nastin_2d FILE_NAME new_density\n";
+	exit;
+}
+
+my $file = $ARGV[0];
+my $density = $ARGV[1];
+
+my $density_line = 12;
+
+@ARGV = ($file);
+$^I = "";
+
+while (<>)
+{
+    if ($. == $density_line) 
+    {
+        my $line = "\t DENSITY= $density\n";
+        print $line;
+    }
+    else
+    {
+    	print;
+    }
+}

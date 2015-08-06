@@ -1,0 +1,32 @@
+#!/usr/bin/perl
+
+use autodie;
+use strict;
+use warnings qw(all);
+
+if ($#ARGV != 1 ) 
+{
+	print "Error!\nUsage: ./insert_params_solidz_1d FILE_NAME new_Young_modulus\n";
+	exit;
+}
+
+my $file = $ARGV[0];
+my $Young_m = $ARGV[1];
+
+my $Young_m_line = 7;
+
+@ARGV = ($file);
+$^I = "";
+
+while (<>)
+{
+    if ($. == $Young_m_line) 
+    {
+        my $line = "  CONSTITUTIVE_MODEL   ISOLIN $Young_m 0.3\n";
+        print $line;
+    }
+    else
+    {
+    	print;
+    }
+}
