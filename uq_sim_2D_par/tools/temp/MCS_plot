@@ -1,0 +1,153 @@
+#!/usr/bin/env python
+
+# script used for getting the quantities of interest (qoi) out of the collective 
+# datafile and plot them; for the current setting, the qoi are the displacement
+# on the x axis and force 0 and force 1
+
+from os import rename, remove
+from sys import argv, exit, stdout
+from traceback import print_exc
+from matplotlib.pyplot import *
+from pylab import plot, show
+import numpy as np
+
+# parse sc coeff file
+def parse_mc_file(datafile):
+	data_all = []
+
+	mean_disp_x_all = []
+	var_disp_x_all = []
+	mean_f0_all = []
+	var_f0_all = []
+	mean_f1_all = []
+	var_f1_all = []
+
+	try:
+		with open(datafile, 'r') as input_file:
+			for line in input_file:
+
+					line_tokens = line.split()
+					if len(line_tokens) !=0:
+						data_all.append(line_tokens[-1])
+
+		input_file.close()
+
+		no_of_timesteps = len(data_all)/6
+
+		for i in range(no_of_timesteps):
+			mean_disp_x_all.append(float(data_all[i*6]))
+			var_disp_x_all.append(float(data_all[i*6 + 1]))
+			mean_f0_all.append(float(data_all[i*6 + 2]))
+			var_f0_all.append(float(data_all[i*6 + 3]))
+			mean_f1_all.append(float(data_all[i*6 + 4]))
+			var_f1_all.append(float(data_all[i*6 + 5]))
+
+	except IOError:
+		print_exc(file = stdout)
+		exit(0)
+
+	return mean_disp_x_all, var_disp_x_all, mean_f0_all, var_f0_all, mean_f1_all, var_f1_all
+
+def diff_plot():
+	fig_mean, ax_mean = subplots(3)
+	fig_var, ax_var = subplots(3)
+
+	x_axis = np.linspace(0, no_of_timesteps, no_of_timesteps)
+
+	fig_mean.suptitle("mean " + datafile1.split('.')[1] + "_" + datafile1.split('.')[1])
+	fig_var.suptitle("var " + datafile1.split('.')[1] + "_" + datafile1.split('.')[1])
+
+	ax_mean[0].plot(x_axis, mean_disp_x_all_1, 'r--', label=datafile1.split('.')[1] + " x displacement", linewidth=2.0)
+	ax_mean[0].plot(x_axis, mean_disp_x_all_2, 'g-.', label=datafile2.split('.')[1] + " x displacement", linewidth=2.0)
+	ax_mean[0].plot(x_axis, mean_disp_x_all_3, 'c--', label=datafile3.split('.')[1] + " x displacement", linewidth=2.0)
+	ax_mean[0].plot(x_axis, mean_disp_x_all_4, 'k-.', label=datafile4.split('.')[1] + " x displacement", linewidth=2.0)
+	ax_mean[0].plot(x_axis, mean_disp_x_all_5, 'y--', label=datafile5.split('.')[1] + " x displacement", linewidth=2.0)
+	ax_mean[0].set_ylabel('Mean of the x displacement')
+	ax_mean[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_mean[0].legend(loc="best", fancybox=True)
+	ax_mean[0].grid()
+	ax_mean[0].set_xlabel('no. of time steps')
+
+	ax_mean[1].plot(x_axis, mean_f0_all_1, 'r--', label=datafile1.split('.')[1] + " x force", linewidth=2.0)
+	ax_mean[1].plot(x_axis, mean_f0_all_2, 'g-.', label=datafile2.split('.')[1] + " x force", linewidth=2.0)
+	ax_mean[1].plot(x_axis, mean_f0_all_3, 'c--', label=datafile3.split('.')[1] + " x force", linewidth=2.0)
+	ax_mean[1].plot(x_axis, mean_f0_all_4, 'k-.', label=datafile4.split('.')[1] + " x force", linewidth=2.0)
+	ax_mean[1].plot(x_axis, mean_f0_all_5, 'y--', label=datafile5.split('.')[1] + " x force", linewidth=2.0)
+	ax_mean[1].set_ylabel('Mean of the x force')
+	ax_mean[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_mean[1].legend(loc="best", fancybox=True)
+	ax_mean[1].grid()
+	ax_mean[1].set_xlabel('no. of time steps')
+
+	ax_mean[2].plot(x_axis, mean_f1_all_1, 'r--', label=datafile1.split('.')[1] + " y force", linewidth=2.0)
+	ax_mean[2].plot(x_axis, mean_f1_all_2, 'g-.', label=datafile2.split('.')[1] + " y force", linewidth=2.0)
+	ax_mean[2].plot(x_axis, mean_f1_all_3, 'c--', label=datafile3.split('.')[1] + " y force", linewidth=2.0)
+	ax_mean[2].plot(x_axis, mean_f1_all_4, 'k-.', label=datafile4.split('.')[1] + " y force", linewidth=2.0)
+	ax_mean[2].plot(x_axis, mean_f1_all_5, 'y--', label=datafile5.split('.')[1] + " y force", linewidth=2.0)
+	ax_mean[2].set_ylabel('Mean of the y force')
+	ax_mean[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_mean[2].legend(loc="best", fancybox=True)
+	ax_mean[2].grid()
+	ax_mean[2].set_xlabel('no. of time steps')
+
+	ax_var[0].plot(x_axis, var_disp_x_all_1, 'r--', label=datafile1.split('.')[1] + " x displacement", linewidth=2.0)
+	ax_var[0].plot(x_axis, var_disp_x_all_2, 'g-.', label=datafile2.split('.')[1] + " x displacement", linewidth=2.0)
+	ax_var[0].plot(x_axis, var_disp_x_all_3, 'c--', label=datafile3.split('.')[1] + " x displacement", linewidth=2.0)
+	ax_var[0].plot(x_axis, var_disp_x_all_4, 'k-.', label=datafile4.split('.')[1] + " x displacement", linewidth=2.0)
+	ax_var[0].plot(x_axis, var_disp_x_all_5, 'y--', label=datafile2.split('.')[1] + " x displacement", linewidth=2.0)
+	ax_var[0].set_ylabel('Var of the x displacement')
+	ax_var[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_var[0].legend(loc="best", fancybox=True)
+	ax_var[0].grid()
+	ax_var[0].set_xlabel('no. of time steps')
+
+	ax_var[1].plot(x_axis, var_f0_all_1, 'r--', label=datafile1.split('.')[1] + " x force", linewidth=2.0)
+	ax_var[1].plot(x_axis, var_f0_all_2, 'g-.', label=datafile2.split('.')[1] + " x force", linewidth=2.0)
+	ax_var[1].plot(x_axis, var_f0_all_3, 'c--', label=datafile3.split('.')[1] + " x force", linewidth=2.0)
+	ax_var[1].plot(x_axis, var_f0_all_4, 'k-.', label=datafile4.split('.')[1] + " x force", linewidth=2.0)
+	ax_var[1].plot(x_axis, var_f0_all_5, 'y--', label=datafile5.split('.')[1] + " x force", linewidth=2.0)
+	ax_var[1].set_ylabel('Var of the x force')
+	ax_var[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_var[1].legend(loc="best", fancybox=True)
+	ax_var[1].grid()
+	ax_var[1].set_xlabel('no. of time steps')
+
+	ax_var[2].plot(x_axis, var_f1_all_1, 'r--', label=datafile1.split('.')[1] + " y force", linewidth=2.0)
+	ax_var[2].plot(x_axis, var_f1_all_2, 'g-.', label=datafile2.split('.')[1] + " y force", linewidth=2.0)
+	ax_var[2].plot(x_axis, var_f1_all_3, 'c--', label=datafile3.split('.')[1] + " y force", linewidth=2.0)
+	ax_var[2].plot(x_axis, var_f1_all_4, 'k-.', label=datafile4.split('.')[1] + " y force", linewidth=2.0)
+	ax_var[2].plot(x_axis, var_f1_all_5, 'y--', label=datafile5.split('.')[1] + " y force", linewidth=2.0)
+	ax_var[2].set_ylabel('Var of the y force')
+	ax_var[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_var[2].legend(loc="best", fancybox=True)
+	ax_var[2].grid()
+	ax_var[2].set_xlabel('no. of time steps')
+
+	show()
+
+	fig_mean.savefig("mc_mean_" + datafile1.split('.')[1] + "_" + datafile1.split('.')[1] + ".png")
+	fig_var.savefig("mc_var_" + datafile1.split('.')[1] + "_" + datafile1.split('.')[1] + ".png")
+
+	
+if __name__ == "__main__":
+
+	if len(argv) != 6:
+		print "Error in " + argv[0] + "!"
+		print "Usage: " + argv[0] + " datafile_1 datafile_2 datafile_3 datafile_4 datafile_5"
+		exit(0)
+
+	datafile1 = argv[1]
+	datafile2 = argv[2]
+	datafile3 = argv[3]
+	datafile4 = argv[4]
+	datafile5 = argv[5]
+
+	mean_disp_x_all_1, var_disp_x_all_1, mean_f0_all_1, var_f0_all_1, mean_f1_all_1, var_f1_all_1 = parse_mc_file(datafile1)
+	mean_disp_x_all_2, var_disp_x_all_2, mean_f0_all_2, var_f0_all_2, mean_f1_all_2, var_f1_all_2 = parse_mc_file(datafile2)
+	mean_disp_x_all_3, var_disp_x_all_3, mean_f0_all_3, var_f0_all_3, mean_f1_all_3, var_f1_all_3 = parse_mc_file(datafile3)
+	mean_disp_x_all_4, var_disp_x_all_4, mean_f0_all_4, var_f0_all_4, mean_f1_all_4, var_f1_all_4 = parse_mc_file(datafile4)
+	mean_disp_x_all_5, var_disp_x_all_5, mean_f0_all_5, var_f0_all_5, mean_f1_all_5, var_f1_all_5 = parse_mc_file(datafile5)
+
+	no_of_timesteps = len(mean_disp_x_all_1)
+
+	diff_plot()

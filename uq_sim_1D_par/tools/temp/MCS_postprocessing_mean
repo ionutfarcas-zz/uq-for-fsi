@@ -8,7 +8,6 @@ from numpy import array, mean
 from traceback import print_exc
 
 files_paths = []
-back_path = "../../"
 
 # take all datafile from given path (i.e. nastin_x or solidz_x, where x = 1 ... no_of_simulation)
 # also, take file numbers in ascending order
@@ -110,8 +109,11 @@ def get_mean(all_same_files, out_path):
 					
 					# transform data into float
 					data = [float(item) for item in data]
-					
 					data_file.close()
+
+					back_path = ''	
+					for i in range(len(path_to_file.split('/'))):
+						back_path += '../'
 					chdir(back_path)
 
 					# put all data in a list and compute the mean
@@ -131,6 +133,10 @@ def get_mean(all_same_files, out_path):
 					mean_file.write(str(item) + '\n')
 			
 			mean_file.close()
+
+			back_path = ''	
+			for i in range(len(out_path.split('/'))):
+				back_path += '../'
 
 			chdir(back_path)
 	except:

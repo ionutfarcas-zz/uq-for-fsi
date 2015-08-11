@@ -1,0 +1,44 @@
+rm -f *.cvg
+rm -f *.plt
+rm -f *.tex
+rm -f *.log*
+rm -f *.rst*
+rm -f *.sol
+find ./ -maxdepth 1 -name '*.ensi*' -print0 | xargs -0 -n 10 rm -f 
+find ./ -maxdepth 1 -name '*.zfem*' -print0 | xargs -0 -n 10 rm -f
+rm -f *.post.msh*
+rm -f *.post.res*
+rm -f *.gid.msh*
+rm -f *.gid.res*
+rm -f *.vu
+rm -f *.vubin
+rm -f *.par
+rm -f *.tra*
+rm -f *.mem*
+#rm -f *.msh
+rm -f *.res
+rm -f *.set
+rm -f *.liv
+rm -f *.mpit
+rm -f *.mpits
+rm -f *.tmp
+rm -f *.mxm
+rm -f *.frc
+rm -f *.p2d
+rm -f *.out
+rm -f *.err
+rm -f *.wit
+rm -f *.cso
+rm -f *.plt
+rm -f fort.*
+find ./ -maxdepth 1 -name '*post.alyabin' -print0 | xargs -0 -n 10 rm -f 
+#rm -f *post.alyabin
+rm -f *post.alyafil
+rm -f *post.alyalog
+rm -f *post.alyapar
+rm -f *.bvox
+rm -f *.h5
+rm -f *.xmf
+rm -f *.pvtu
+rm -f *.vtu
+rm -rf *_vtk

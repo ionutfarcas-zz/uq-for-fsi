@@ -9,7 +9,6 @@ from traceback import print_exc
 from math import sqrt
 
 files_paths = []
-back_path = "../../"
 
 def hermite_poly(deg, var):
 	try:
@@ -181,7 +180,7 @@ def import_datafiles(no_of_simulations, base_path, files_type):
 
 	try:
 		for i in range(no_of_simulations):
-			files_path = base_path + str(i + 1)
+			files_path = base_path + str(i)
 			files_paths.append(files_path)
 
 			files = [ f for f in listdir(files_path) if f.startswith(files_type) ]
@@ -205,7 +204,7 @@ def get_same_files(no_of_simulations, all_files, files_type, files_no, dim):
 	try:
 		if dim != 0:
 			for i in range(dim):
-				list_of_same_files = 'data_file_' + str(i + 1)
+				list_of_same_files = 'data_file_' + str(i)
 				list_of_same_files = []
 
 				for one_sim_files in all_files:
@@ -266,6 +265,11 @@ def get_coefficients(all_same_files, out_path, no_of_simulations, no_of_coeffici
 						data = [float(item) for item in data]
 						
 						data_file.close()
+
+						back_path = ''	
+						for i in range(len(path_to_file.split('/'))):
+							back_path += '../'
+
 						chdir(back_path)
 
 						data_one_file_type.append(data)
@@ -282,8 +286,8 @@ def get_coefficients(all_same_files, out_path, no_of_simulations, no_of_coeffici
 					data_out.append(coeff)
 				
 				out_file = files[1]
-
 				chdir(out_path)
+
 				with open(out_file, 'w') as mean_file:
 					for item in files_header:
 						mean_file.write(str(item))
@@ -291,6 +295,11 @@ def get_coefficients(all_same_files, out_path, no_of_simulations, no_of_coeffici
 						mean_file.write(str(item) + '\n')
 				
 				mean_file.close()
+
+				back_path = ''	
+				for i in range(len(out_path.split('/'))):
+					back_path += '../'
+					
 				chdir(back_path)
 
 			out_path = out_path[:-1]

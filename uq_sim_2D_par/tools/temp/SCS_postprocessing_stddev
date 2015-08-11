@@ -5,6 +5,7 @@ from os import listdir, chdir, getcwd, makedirs
 from os.path import isfile, join, exists
 from re import sub
 from numpy import array, mean
+from math import sqrt
 from traceback import print_exc
 
 files_paths = []
@@ -108,8 +109,17 @@ def get_stddev(all_same_files, out_path):
 					
 					# transform data into float
 					data = [float(item) for item in data]
+
+					back_path = ''	
+					for i in range(len(path_to_file.split('/'))):
+						back_path += '../'
 					
 					data_file.close()
+
+					back_path = ''	
+					for i in range(len(path_to_file.split('/'))):
+						back_path += '../'
+						
 					chdir(back_path)
 
 					# put all data in a list and compute the mean
@@ -121,7 +131,7 @@ def get_stddev(all_same_files, out_path):
 				for c in coeff:
 					std_dev += c**2
 
-				data_out.append(std_dev)
+				data_out.append(sqrt(std_dev))
 		
 			# create output file with the same name as all same input files	
 			out_file = files[1]
@@ -135,6 +145,11 @@ def get_stddev(all_same_files, out_path):
 					stddev_file.write(str(item) + '\n')
 
 			stddev_file.close()
+
+			back_path = ''	
+			for i in range(len(out_path.split('/'))):
+				back_path += '../'
+
 			chdir(back_path)
 
 	except:

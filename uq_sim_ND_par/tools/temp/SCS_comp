@@ -101,61 +101,127 @@ def diff_plot():
 
 	x_axis = np.linspace(0, no_of_timesteps, no_of_timesteps)
 
-	ax_mean[0].plot(x_axis, mean_disp_x_all_1, 'r--', label="sim1 x displacement", linewidth=2.0)
-	ax_mean[0].plot(x_axis, mean_disp_x_all_2, 'g-.', label="sim2 x displacement", linewidth=2.0)
+	fig_mean.suptitle("mean " + datafile1.split('.')[1] + "_" + datafile1.split('.')[1])
+	fig_var.suptitle("var " + datafile1.split('.')[1] + "_" + datafile1.split('.')[1])
+
+	ax_mean[0].plot(x_axis, mean_disp_x_all_1, 'r--', label=datafile1.split('.')[1] + " x displacement", linewidth=2.0)
+	ax_mean[0].plot(x_axis, mean_disp_x_all_2, 'g-.', label=datafile2.split('.')[1] + " x displacement", linewidth=2.0)
 	ax_mean[0].set_ylabel('Mean of the x displacement')
 	ax_mean[0].autoscale(enable=True, axis=u'both', tight=True)
-	ax_mean[0].legend(loc="upper right", fancybox=True)
+	ax_mean[0].legend(loc="best", fancybox=True)
 	ax_mean[0].grid()
 	ax_mean[0].set_xlabel('no. of time steps')
 
-	ax_mean[1].plot(x_axis, mean_f0_all_1, 'r--', label="sim1 x force", linewidth=2.0)
-	ax_mean[1].plot(x_axis, mean_f0_all_2, 'g-.', label="sim2 x force", linewidth=2.0)
+	ax_mean[1].plot(x_axis, mean_f0_all_1, 'r--', label=datafile1.split('.')[1] + " x force", linewidth=2.0)
+	ax_mean[1].plot(x_axis, mean_f0_all_2, 'g-.', label=datafile2.split('.')[1] + " x force", linewidth=2.0)
 	ax_mean[1].set_ylabel('Mean of the x force')
 	ax_mean[1].autoscale(enable=True, axis=u'both', tight=True)
-	ax_mean[1].legend(loc="upper right", fancybox=True)
+	ax_mean[1].legend(loc="best", fancybox=True)
 	ax_mean[1].grid()
 	ax_mean[1].set_xlabel('no. of time steps')
 
-	ax_mean[2].plot(x_axis, mean_f1_all_1, 'r--', label="sim1 y force", linewidth=2.0)
-	ax_mean[2].plot(x_axis, mean_f1_all_2, 'g-.', label="sim2 y force", linewidth=2.0)
+	ax_mean[2].plot(x_axis, mean_f1_all_1, 'r--', label=datafile1.split('.')[1] + " y force", linewidth=2.0)
+	ax_mean[2].plot(x_axis, mean_f1_all_2, 'g-.', label=datafile2.split('.')[1] + " y force", linewidth=2.0)
 	ax_mean[2].set_ylabel('Mean of the y force')
 	ax_mean[2].autoscale(enable=True, axis=u'both', tight=True)
-	ax_mean[2].legend(loc="upper right", fancybox=True)
+	ax_mean[2].legend(loc="best", fancybox=True)
 	ax_mean[2].grid()
 	ax_mean[2].set_xlabel('no. of time steps')
 
-	fig_mean.savefig('Mean comparison for SCS.png')
-
-
-	ax_var[0].plot(x_axis, var_disp_x_all_1, 'r--', label="sim1 x displacement", linewidth=2.0)
-	ax_var[0].plot(x_axis, var_disp_x_all_2, 'g-.', label="sim2 x displacement", linewidth=2.0)
+	ax_var[0].plot(x_axis, var_disp_x_all_1, 'r--', label=datafile1.split('.')[1] + " x displacement", linewidth=2.0)
+	ax_var[0].plot(x_axis, var_disp_x_all_2, 'g-.', label=datafile2.split('.')[1] + " x displacement", linewidth=2.0)
 	ax_var[0].set_ylabel('Var of the x displacement')
 	ax_var[0].autoscale(enable=True, axis=u'both', tight=True)
-	ax_var[0].legend(loc="upper right", fancybox=True)
+	ax_var[0].legend(loc="best", fancybox=True)
 	ax_var[0].grid()
 	ax_var[0].set_xlabel('no. of time steps')
 
-	ax_var[1].plot(x_axis, var_f0_all_1, 'r--', label="sim1 x force", linewidth=2.0)
-	ax_var[1].plot(x_axis, var_f0_all_2, 'g-.', label="sim2 x force", linewidth=2.0)
+	ax_var[1].plot(x_axis, var_f0_all_1, 'r--', label=datafile1.split('.')[1] + " x force", linewidth=2.0)
+	ax_var[1].plot(x_axis, var_f0_all_2, 'g-.', label=datafile2.split('.')[1] + " x force", linewidth=2.0)
 	ax_var[1].set_ylabel('Var of the x force')
 	ax_var[1].autoscale(enable=True, axis=u'both', tight=True)
-	ax_var[1].legend(loc="upper right", fancybox=True)
+	ax_var[1].legend(loc="best", fancybox=True)
 	ax_var[1].grid()
 	ax_var[1].set_xlabel('no. of time steps')
 
-	ax_var[2].plot(x_axis, var_f1_all_1, 'r--', label="sim1 y force", linewidth=2.0)
-	ax_var[2].plot(x_axis, var_f1_all_2, 'g-.', label="sim2 y force", linewidth=2.0)
+	ax_var[2].plot(x_axis, var_f1_all_1, 'r--', label=datafile1.split('.')[1] + " y force", linewidth=2.0)
+	ax_var[2].plot(x_axis, var_f1_all_2, 'g-.', label=datafile2.split('.')[1] + " y force", linewidth=2.0)
 	ax_var[2].set_ylabel('Var of the y force')
 	ax_var[2].autoscale(enable=True, axis=u'both', tight=True)
-	ax_var[2].legend(loc="upper right", fancybox=True)
+	ax_var[2].legend(loc="best", fancybox=True)
 	ax_var[2].grid()
 	ax_var[2].set_xlabel('no. of time steps')
 
-	fig_var.savefig('Variance comparison for SCS.png')
+	show()
+
+	fig_mean.savefig("sc_mean_" + datafile1.split('.')[1] + "_" + datafile1.split('.')[1] + ".png")
+	fig_var.savefig("sc_var_" + datafile1.split('.')[1] + "_" + datafile1.split('.')[1] + ".png")
+
+def err_plot():
+	fig_err_mean, ax_err_mean = subplots(3)
+	fig_err_var, ax_err_var = subplots(3)
+
+	x_axis = np.linspace(0, no_of_timesteps, no_of_timesteps)
+
+	fig_err_mean.suptitle("mean's relative error: " + datafile1.split('.')[1] + "_" + datafile1.split('.')[1])
+	fig_err_var.suptitle("var's relative error: " + datafile1.split('.')[1] + "_" + datafile1.split('.')[1])
+
+	err_mean_disp_x = [abs(1 - item1/item2) for item1, item2 in zip(mean_disp_x_all_1, mean_disp_x_all_2)]
+	err_mean_f_x = [abs(1 - item1/item2) for item1, item2 in zip(mean_f0_all_1, mean_f0_all_2)]
+	err_mean_f_y = [abs(1 - item1/item2) for item1, item2 in zip(mean_f1_all_1, mean_f1_all_2)]
+
+	err_var_disp_x = [abs(1 - item1/item2) for item1, item2 in zip(var_disp_x_all_1, var_disp_x_all_2)]
+	err_var_f_x = [abs(1 - item1/item2) for item1, item2 in zip(var_f0_all_1, var_f0_all_2)]
+	err_var_f_y = [abs(1 - item1/item2) for item1, item2 in zip(var_f1_all_1, var_f1_all_2)]
+
+	ax_err_mean[0].loglog(x_axis, err_mean_disp_x, 'r--', label="err x displacement", linewidth=2.0)
+	ax_err_mean[0].set_ylabel('relative error of the x displacement')
+	ax_err_mean[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_mean[0].legend(loc="best", fancybox=True)
+	ax_err_mean[0].grid()
+	ax_err_mean[0].set_xlabel('no. of time steps')
+
+	ax_err_mean[1].loglog(x_axis, err_mean_f_x, 'r--', label="err x force", linewidth=2.0)
+	ax_err_mean[1].set_ylabel('relative error of the x force')
+	ax_err_mean[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_mean[1].legend(loc="best", fancybox=True)
+	ax_err_mean[1].grid()
+	ax_err_mean[1].set_xlabel('no. of time steps')
+
+	ax_err_mean[2].loglog(x_axis, err_mean_f_x, 'r--', label="err y force", linewidth=2.0)
+	ax_err_mean[2].set_ylabel('relative error of the y force')
+	ax_err_mean[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_mean[2].legend(loc="best", fancybox=True)
+	ax_err_mean[2].grid()
+	ax_err_mean[2].set_xlabel('no. of time steps')
+
+
+	ax_err_var[0].loglog(x_axis, err_var_disp_x, 'r--', label="err x displacement", linewidth=2.0)
+	ax_err_var[0].set_ylabel('relative error of the x displacement')
+	ax_err_var[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_var[0].legend(loc="best", fancybox=True)
+	ax_err_var[0].grid()
+	ax_err_var[0].set_xlabel('no. of time steps')
+
+	ax_err_var[1].loglog(x_axis, err_var_f_x, 'r--', label="err x force", linewidth=2.0)
+	ax_err_var[1].set_ylabel('relative error of the x force')
+	ax_err_var[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_var[1].legend(loc="best", fancybox=True)
+	ax_err_var[1].grid()
+	ax_err_var[1].set_xlabel('no. of time steps')
+
+	ax_err_var[2].loglog(x_axis, err_var_f_x, 'r--', label="err y force", linewidth=2.0)
+	ax_err_var[2].set_ylabel('relative error of the y force')
+	ax_err_var[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_var[2].legend(loc="best", fancybox=True)
+	ax_err_var[2].grid()
+	ax_err_var[2].set_xlabel('no. of time steps')
 
 	show()
 
+	fig_err_mean.savefig("sc_mean_abs_err_" + datafile1.split('.')[1] + "_" + datafile1.split('.')[1] + ".png")
+	fig_err_var.savefig("sc_var_abs_err_" + datafile1.split('.')[1] + "_" + datafile1.split('.')[1] + ".png")
+	
 if __name__ == "__main__":
 
 	if len(argv) != 5:
@@ -174,3 +240,4 @@ if __name__ == "__main__":
 	no_of_timesteps = len(mean_disp_x_all_1)
 
 	diff_plot()
+	err_plot()

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if [ $# -eq 2 ]; 
+then 
+    for i in `seq 1 $2`; 
+	do
+	let j=$i-1
+        cd $1/nastin_$j
+        ../../alya2pos.x Flap
+	cd ../solidz_$j
+	../../alya2pos.x Flap
+        cd ../../
+    done
+else
+	echo "Error when using $0!"
+	echo "Correct usage: $0 data_folder no_of_simulations"
+fi
