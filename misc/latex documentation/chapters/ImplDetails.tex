@@ -1,0 +1,202 @@
+\chapter{Implementation Details}
+\label{chapter:Implementation Details}
+	The purpose of this chapter is to present the implemented UQ software and it is divided into four sections. A general description is given in the first section, providing a general overview of the implementation, its functionality and properties, as well as how its interaction with the application code. The next three sections present o more detailed description, focusing on the implementation's constitutive modules: \emph{pre-processing} phase, described in \refSection{sec:Pre-processing}, UQ \emph{simulation} phase, described in \refSection{sec:Simulation} and at the end, the \emph{post-processing} step, described in \refSection{sec:Post-processing}.
+\section{General Description}
+\label{sec:General Description}
+	The UQ software consists of a main \emph{C++ implementation} together with a set of external \emph{tools} used for interacting with the application code. One of its important features is its \emph{non-intrusive interaction} with the FSI software, by only needing access to the \emph{configuration} files and the \emph{executable} file of the multi-physics software, hence, treating the FSI solver as a \emph{black box}. Furthermore, its \emph{configuration} is done via a text file, at \emph{runtime}, facilitating e.g. the switch between UQ methods or probability distributions, without the need for recompiling the code. The configuration step is further explained in the following paragraph. Another key feature is comprised by the division into \emph{three main modules}, i.e. \emph{pre-processing}, \emph{simulation} and \emph{post-processing}, which  provides an easier understanding of the code, facilitates its easier extension and/or improvement and also permits its usage as a library\footnote{for the moment, this only works for applications codes with a structure similar to the ones used in this work}. Last but not least, although the code was tested for only two specific applications, it can be easily altered to work for any application similar to the ones considered in this work, whose configuration is done via \emph{external files}, with the alteration being done for the tools used to interact with the application code.
+	
+	It should be noted that the location of the UQ code is assumed to be \emph{test case/uq code}, thus, all tools that interact with the application code require a relative path to the it. Moreover, the configuration file is located inside \emph{uq code/}. It is a \emph{text file} named \emph{configuration.uq} that obeys the following editing rules:
+\begin{itemize}
+\item lines that start with $\#$ are ignored
+\item configuration lines are of the form: \emph{name} = \emph{value}
+\item no line is allowed to be empty
+\end{itemize}
+	This implies that a line of this file has the form e.g. \emph{nsamples = 100}. It is comprised of three main parts, each responsible for a certain type of configuration.
+\begin{enumerate}
+\item communication with the application code configuration \newline
+In this part, the \emph{relative path} to the external tools and specific application code files is given. As an example, the set-up for the relative path to the tool used to modify the \emph{viscosity} value for the fluid is: \emph{insert$\_$nastin$\_$exec = ../tools/util/insert$\_$params$\_$nastin$\_$vis}. 
+\item UQ problem configuration \newline
+In this segment, the user can set-up UQ specific data, such as which \emph{algorithm} to employ, which \emph{pdf} to use in order to model the input uncertainty, the number of samples for Monte Carlo Sampling, the \emph{quadrature degree} for Stochastic Collocations, etc. Although is not a hard restriction, it is preferred that the \emph{algorithm} and \emph{pdf} are specified as \emph{boolean} variables, with the following convention: 0 for Monte Carlo, 1 for Collocations and 0 for normal distribution and 1 for uniform distribution, respectively. As an example, the set-up for normal distribution is \emph{pdf = 0}. If this rule is not met, an error message is output on the console.
+\item stochastic problem set-up \newline
+In the final part, the numerical values for the \emph{two parameters} characterizing the uncertain input(s) are specified; for \emph{normal} distribution, the parameters are the \emph{mean} and the \emph{standard deviation}, whereas for \emph{uniform} distribution, the \emph{left} and \emph{right} interval boundaries, respectively. As an example, if the fluid density is modelled as a normal random variable, its configuration is \emph{rho$\_$f$\_$p1 = 0.01}, followed by  \emph{rho$\_$f$\_$p2 = 0.001}.
+\end{enumerate}
+		
+	The C++ implementation consists of a sequence of \emph{classes} having the functionality outlined in the \emph{sampling algorithms}, described in \refChapter{chapter:Forward Propagation of Uncertainty}, together with their additional required capabilities. This means that for \emph{Monte Carlo Sampling}, classes used to elicit a \emph{user defined} number of \emph{normal}  and \emph{uniform random variables} are implemented, while for \emph{Stochastic Collocations}, the additional required functionality consists of classes that generate \emph{nodes} and \emph{weights} used for numerical quadrature. Moreover, additional functions are implemented in a separate helper library, used to e.g. parse the configuration file, create strings with user defined names used to call external tools, etc. An important remark is that the external tools, as well as the multi-physics software's executable file are called via \emph{system} calls\footnote{the \emph{int system (const char* command)} function is available in the \emph{cstdlib} C++ library}. 
+		
+	The end of the implementation process resulted in \emph{six projects}, with the following capabilities: the first three \emph{serial} UQ implementations consist in one for a \emph{one-dimensional} problem, one for a scenario with \emph{two stochastic dimensions} and one for a \emph{multi-dimensional} stochastic problem. These codes are built as \emph{one stand-alone applications}, with integrated constitutive modules.  Although they encompass the entire UQ simulation pipeline, they proved to be of little use for the testing phase because of the \emph{complexity} of the simulated scenarios. Even if the application codes are already parallel, together with the reduced combined cost of the pre-processing and post-processing phase compared to the simulation cost, a \emph{serial}\footnote{in this context, \emph{serial} means either a completely serial application or one that is serial, except for the application code} is not practically feasible. Moreover, it also contradicts one of the goals of this work, the use of \emph{HPC}. Given these, the next logical step seemed to be the \emph{transformation} of the serial implementations into parallel ones, more specifically, \emph{process (MPI-based) parallel} and hence, obtaining an HPC suited application. This was not possible, given the reasons mentioned in \refSection{sec:General Description of the Multi-Physics Code} and \refSection{sec:General Description of the Coupling Library}: the used application code already uses MPI, thus, it is not possible to use MPI in the UQ code as well. This restriction gave rise to two possibilities: either \emph{compile} the application code so that it does not use MPI, i.e. compile preCICE with \emph{mpi=off} flag and Alya with \emph{make}, or \emph{decouple} the UQ code so that the three constitutive modules are separated, opening the possibility to run the \emph{simulation} module in a \emph{pseudo-parallel fashion}, by taking advantage of the \emph{MAC Cluster's batch system} capabilities. Taking once again into account the complexity and the high compute and memory requirements of the tested scenarios, the \emph{second} option was adopted in this work. The decoupled approach can be summarized as follows: after the pre-processing is performed for a user defined number of UQ points\footnote{either samples, for Monte Carlo sampling, or quadrature nodes, for Stochastic Collocations}, the simulation part is done via launching \emph{simultaneously} an equal number of \emph{batch scripts}, letting the cluster's batch system to administrate their run, depending on the degree of cluster's occupancy. Finally, after all simulations are performed, the post-processing phase is realized. This is further explained in the next three sections. In the following paragraph, an overview of all presented implementations is provided.
+	
+	The motivation behind designing a one-dimensional stochastic implementation stems from the fact that before any multi-dimensional simulation is performed, the one-dimensional ones are to be performed in order to understand \emph{how} does the uncertainty in the input physical parameters affect the underlying simulation scenario and based on the obtained results, to formulate \emph{relevant multi-dimensional} scenarios. The two-dimensional code differs from a \emph{generic multi-dimensioanl} one by the fact that the implementation for Stochastic Collocations is realized using \emph{brute-force}, i.e. the two-dimensional quadrature is done using a \emph{tensor product} basis of the one-dimensional case. This means that for, e.g. Gauss-Hermite quadrature, one has (add reference!):
+\begin{equation} \label{eq:2dimquad}
+\int_\real{\int_\real{f(x,y)dxdy}} = \sum_{i=0}^n{\sum_{j=0}^n{f(\zeta_i, \zeta_j)\omega_i \omega_j}},
+\end{equation}
+where $\zeta_i, \omega_i, \zeta_j, \omega_j, i=0\ldots n, j=0\ldots n$ are the pair of \emph{nodes} and respectively the \emph{weights} for each dimension. This implementation serves as a comparison tool against the SG++ based implementation because of the relatively similar required computational resources by both approaches, which is be further presented in \refChapter{chapter:Test Scenarios and Results}. Finally, the multi-dimensional\footnote{in this context, multi-dimensional implies dimension greater or equal to two} design aims to tackle an \emph{arbitrary dimensional} stochastic problem, featuring a multi-dimensional Sparse Grids Stochastic Collocations implementation and a multi-dimensional Monte Carlo sampling algorithm. 
+
+	The use of C++ as the development language offered multiple advantages, including the possibility to create an implementation that is not only suited for \emph{HPC}, but also permits the usage of modern programming paradigms, such as \emph{object-oriented} programming. 
+\dirtree{%
+.1 main source file.
+.2 UQ simulation.
+.3 Monte Carlo simulation - normal distribution.
+.3 Monte Carlo simulation - uniform distribution.
+.4 Random number generator.
+.5 Normal random variables.
+.5 Uniform random variables.
+.3 Stochastic Collocations simulation - normal distribution.
+.3 Stochastic Collocations simulation - uniform distribution.
+.4 Gaussian quadrature.
+.5 Gaussian-Hermite quadrature.
+.5 Gaussian-Legendre quadrature.
+}
+	At a conceptual level, the above diagram describes the UQ code structure as \emph{tree}, having the \emph{main source file} as root. The additional library containing the \emph{helper} functions was omitted, because it is not illustrative for the object oriented structure. As it can be inferred from the diagram, three \emph{parent} classes were used, each outlining a \emph{generic behaviour}: bottom-up, \emph{Gaussian quadrature} specifies the necessary states and behaviours for specific instances of Gaussian-based quadrature, needed by Stochastic Collocations. In the same fashion, the \emph{Random number generator} characterizes the functionality utilized by the specific random number generators used by Monte Carlo Sampling. Finally, a generic \emph{UQ simulation} class was defined, which outlines the generic, modular behaviour of the form pre-processing, simulation, post-processing.
+
+	As it was already stated, the UQ implementation was designed to interact with the multi-physics code in a non-intrusive way. It needs access only to the \emph{configuration} files for the \emph{fluid} and \emph{structure} solvers. As an example, for the \emph{Vertical Flap} (c.f. \refSection{sec:Vertical Flap}), the configuration files are \emph{Flap.nsi.dat}- for the fluid solver and \emph{Flap.sld.dat}- for the structure solver. For the deterministic problem, the part where the physical parameters are set is:
+\\
+...
+\\
+ PROPERTIES \\
+         DENSITY=    0.01 \\
+         VISCOSITY=  0.03 \\
+ END$\_$PROPERTIES \\
+ ... \\
+for the fluid solver and
+\\
+...
+\\
+ PROPERTIES \\
+        DENSITY=             0.01 \\
+  		CONSTITUTIVE$\_$MODEL   ISOLIN  0.5e5  0.3 \\
+ END$\_$PROPERTIES \\
+ ... \\
+for the structure problem, where, the numbers from the CONSTITUTIVE$\_$MODEL line represent the \emph{Young's modulus} and \emph{Poisson's ratio}, respectively. It is important to emphasize that every Alya-based test case has two configuration files for the fluid and structure problem, respectively, of the form \emph{Name.nsi.dat} and \emph{Name.sld.dat}, where \emph{Name} is the conventional name of the test case. 
+\newline
+
+	In the following sections, the pre-processing, simulation and post-processing steps are explained in more detail. Because of the identical functionality provided by the \emph{serial} and \emph{de-serialized} implementations, each phase is similar for both types implementations. However, as the \emph{de-serialized} version was mainly used throughout simulations, in the following the emphasis is on solely on it.
+\section{Pre-processing}
+\label{sec:Pre-processing} 
+	
+	In the \emph{pre-processing} phase consists in set-up of the UQ problem. It differs for Monte Carlo Sampling and Stochastic Collocations, hence it is presented separately. However, given the \emph{robustness} of the Monte Carlo algorithm, the pre-processing step for \emph{one} or \emph{multi-dimensions} is \emph{almost identical}, as the only change from one to many dimensions is reflected by \emph{how many} random variables are to be generated. On the other hand, given the \emph{classical} and \emph{sparse grids} based implementations for Stochastic Collocations, the pre-processing phase differs and thus, it is presented distinctively, for both possibilities. As an observation, it is important to outline that before any simulation is done, it is assumed that the configuration is already set-up in \emph{configuration.uq}.
+\newline
+\textbf{Monte Carlo Sampling}
+\newline
+	For Monte Carlo Sampling, the first step is to generate a \emph{user-defined number of random variables}, depending on \emph{dimensionality}. This is realized using one of C++ standard library's pseudo-random number generators\footnote{all specific functions are available in \emph{random} library}, based on the \emph{Mersenne Twister 19937 generator} (add reference!) and the \emph{random device}, used as a \text{seed}, which provides a highly accurate way of generating random variables (add reference). This functionality is provided by classes \emph{NormalRandomVariable} and \emph{UniformRandomVariable}. Afterwards, via calling an external bash script tool called \emph{create$\_$data$\_$point}, a folder called simulation$\_i, i = 0...nsamples-1$ is created, corresponding to \emph{each} sample that contains \emph{two folders and one file}: \emph{nastin$\_i$} and \emph{solidz$\_i$}, $i = 0...nsamples-1$ and the \emph{preCICE configuration file} (c.f. \refSection{sec:General Description of the Coupling Library} ), respectively. In the \emph{nastin} and \emph{solidz} folders, the data that is needed by the multi-physics application code for one simulation is copied by the tool from \emph{a generic, deterministic set-up}. Succeeding the creation of the simulation folder is the \emph{replacement} of the deterministic physical parameter that was considered to be uncertain by the corresponding random variable. This is realized by calling an external Perl tool, with a name of the form \emph{insert$\_$params$\_$nastin$\_$} -for a fluid specific parameter, or \emph{solidz$\_$} - for a structure specific parameter, followed by the name of the parameter to be replaced. This tool edits the data file \emph{in-place}. All steps can be summarized in the following algorithm:
+\begin{algorithm}
+\caption{Pre-processing for arbitrary dimension Monte Carlo Sampling
+\label{alg:1DMCS_preproc}}
+  \begin{algorithmic}[1]
+    \Require{$dimension$, $nsamples$ values \Comment{defined in the configuration file}}
+    \For{$i \gets 0 \textrm{ to } dimension-1$}
+    		\State call function that creates $nsamples$ random variables
+    	\EndFor
+    \For{$i \gets 0 \textrm{ to } nsample-1$}
+        \State call create$\_$data$\_$point \Comment{create simulation$\_i$ folder}
+        \State call insert$\_$new$\_$data \Comment{replace the underlying physical parameter in simulation$\_i$}
+    \EndFor
+  \end{algorithmic}
+\end{algorithm}
+\newline	
+\textbf{Stochastic Collocations}
+\newline
+	As a general outline, the pre-processing phase for Stochastic Collocations can be summarized as following: depending on dimension, \emph{generate collocations points} - nodes and weight for classical approach, nodes for sparse grids approach - then \emph{create} \emph{simulation} folders, based on the number of collocation points and in the end, modify the underlying parameters that are considered to be uncertain in the solver's data files. In the following, these steps are put into perspective for each approach.
+\begin{itemize}
+\item Classical approach 
+
+	Classical approach means \emph{one} or \emph{two} dimensional Stochastic Collocations, where the pre-processing step is performed as following: in the beginning, a \emph{user-defined number of nodes and weights is generated}, where the number is given by the \emph{quadrature degree}, defined in the configuration file. For the one-dimensional case, this functionality is implemented in the classes \emph{GaussHermiteQuadrature} and \emph{GaussLegendreQuadrature}. This is used for the two-dimensional case too, as described in \refEquation{eq:2dimquad}. The nodes and weights are saved statically using \emph{STL vectors}\footnote{defined in the \emph{vector} library} for every input \emph{degree} less or equal to ten. Afterwards, for the one-dimensional scenario, the steps are similar to the ones for Monte Carlo Sampling: calling \emph{create$\_$data$\_$point}, the folder simulation$\_i, i = 0...nsamples-1$ is created for \emph{each} collocation point, containing \emph{nastin$\_i$} and \emph{solidz$\_i$}, $i = 0...quadrature degree-1$ folders, each initially containing the \emph{same} deterministic data, and the \emph{preCICE configuration file}. Afterwards, the \emph{replacement} of the deterministic physical parameter that was considered to be uncertain, as presented in (add formula that will be described in introUQ!!!), by the corresponding node, follows. This is realized by calling \emph{insert$\_$params$\_$nastin$\_$} or \emph{solidz$\_$}, followed by the name of the parameter to be replaced. As the two-dimensional case in based on a \emph{tensor-product} of the one-dimensional case, it follows that in the two-dimensional setting the degree is $n^2$, where n is the one-dimensional degree. Instead of using \emph{uni-modal} vectors for storing the nodes and weights, the two-dimensional implementation uses two \emph{matrices}, each with two rows, one for nodes, the other for weights, each containing \emph{n} times the {n} corresponding one-dimensional nodes and weights, respectively. After the collocation points are generated, the following steps are the same as presented above. All steps are summarized in algorithm \ref{alg:1_2DSCS_preproc}.
+\begin{algorithm}
+\caption{Pre-processing for classical Stochastic Collocations
+\label{alg:1_2DSCS_preproc}}
+  \begin{algorithmic}[1]
+    \Require{$dimension$, $quadrature \ degree$ values \Comment{defined in the configuration file}}
+    \If{$dimension$ is 1}
+    		\State call function that generates $quadrature \ degree$ nodes and weights
+    	\ElsIf{$dimension$ is 2}
+    	 	 \For{$i \gets 0 \textrm{ to } quadrature \ degree-1$}
+    	 	    		\State call function that generates $quadrature \ degree$ nodes and weights
+    	 	 \EndFor
+    	\EndIf
+    \For{$i \gets 0 \textrm{ to } quadrature \ degree-1$}
+        \State call create$\_$data$\_$point \Comment{create simulation$\_i$ folder}
+        \State call insert$\_$new$\_$data \Comment{replace the underlying physical parameter in simulation$\_i$}
+    \EndFor
+  \end{algorithmic}
+\end{algorithm}
+\item Sparse grids based approach 
+
+	One difference between the \emph{classical approach} and the \emph{sparse grids approach} stems in the \emph{generation} of the collocation points. After this step is complete, the remaining is identical to the previous case, hence, it is not repeated here. In this scenario, the generation of collocation points is done by SG++ and because it is more complex than the classical approach, the code providing this functionality is presented next, followed afterwards by an explanation.
+\begin{lstlisting}
+virtual vec2d_float_t pre_processing() const
+{
+	SGPP::base::GridIndex* gp;
+	double grid_point = 0.0;
+	vec2d_float_t result;
+
+	for(size_t i = 0; i < grid_storage_size; ++i) 
+	{
+		std::vector<SGPP::float_t> p;
+		gp = grid_storage->get(i);
+			
+		for(int j = 0 ; j < i_dim ; ++j)
+		{
+			grid_point = l_limits[j] + 
+				(r_limits[j] - l_limits[j]) * gp->getCoord(j);
+			p.push_back(grid_point);
+		}
+
+		result.push_back(p);
+	}
+
+	return result;
+}
+\end{lstlisting}
+	The first particularity of the above implementation is that, as presented in \refSection{subsec:Sparse Grids Toolbox SG++}, SG++ has the built-in functionality for performing classical numerical quadrature on $[0, 1]^d$, where d is the \emph{dimension}. Thus, it generates \emph{only} a set of \emph{nodes}. Moreover, as stated in formula (add formula from \refSection{subsec:Sparse Grids Toolbox SG++} to show how to do arbitrary quadrature with SG++), for both \emph{normal} and \emph{uniform} random variables, $[0, 1]^d$ needs to be \emph{shifted} to an arbitrary $[a, b]^d, a, b \in \real, a \leq b$. This being stated, the above defined method generates a matrix of \emph{shifted} nodes, from $[0,1]^d$ to $[l\_limit_0, r\_limit_0] \times [l\_limit_1, r\_limit_1] \times \ldots \times [l\_limit_{dim-1}, r\_limit_{dim-1}]$ of dimension $grid\_storage\_size \times dim$, where $l\_limit_j, r\_limit_j, j = 0 \ldots dim-1$ represent the new \emph{integration interval along direction j}, while $grid\_storage\_size$ is the size of the underlying generated sparse grid.
+\end{itemize}
+
+	In order to use the described code, a \emph{makefile} was created to handle its compilation, for which, the user has to be located inside \emph{test case/uq code/src$\_$preprocessing} and type \emph{make}. After the code is compiled, the next step is to simply type \emph{./executable name} in the command line. In the following, the \emph{simulation} step is described into more details.
+\section{Simulation}
+\label{sec:Simulation}
+to be completed; after a simulation is done on MAC cluster  
+\section{Post-processing}
+\label{sec:Post-processing}  
+	
+	Among the three constitutive modules, \emph{post-processing} is the most complex. This is mainly due to the fact that it is a \emph{subjective process}; after all simulations are performed, the resulted data can be assessed from multiple perspectives, e.g. from a probabilistic, statistics or sensitivity analysis points of view. In the underlying implementation, this is visible via a wide palette of post-processing C++ methods and external \emph{Python}-based tools. Before going further, it is important to mention that, as presented in \refSection{sec:General Description of the Coupling Library}, preCICE has the built-in capability to provide the physical description of the output of the carried out simulation at each time-step, in a user defined watch-point, having the coordinates defined in \emph{precice-config.xml}. This file is saved either for the fluid or for the structure, depending on the specified configuration in \emph{precice-config.xml}. For example, for the \emph{Vertical Flap} scenario, the watch-point is a text file named \emph{Ritghtcorner.watchpoint.txt}, located in \emph{solidz} that stores the \emph{x displacement}, \emph{y displacement}, \emph{$\Delta$x displacement}, \emph{$\Delta$y displacement} and \emph{forces} on both x and y axis, for the \emph{right corner} corner of the structure, i.e. coordinates \emph{(4, 2)}. Using this feature, the first considered \emph{quantities of interest} were chosen among the parameters available in the watch-point. This offers a good starting point for understanding the uncertainty in the considered scenario, whereas for a wider range of possibilities, specific tools were designed so that the quantities of interest are chosen from the \emph{entire set of time-steps of the simulated data}.
+	
+	As in the case of \emph{pre-processing} step, post-processing has both common and different parts, with respect to the two considered UQ algorithms. Furthermore, the widest range of functionality is provided for the \emph{one-dimensional} implementation, for reasons which are presented in the following. Next, the C++ based post-processing step is presented for Monte Carlo Sampling and then for Stochastic Collocations, followed by the description of the extra external tools.
+\newline
+\textbf{Monte Carlo Sampling}
+\newline
+	In the C++ implementation, the first part of post-processing consist in \emph{gathering} data from all simulations in a common directory, so that it is easier to be processed. Via an external bash script tool named \emph{postprocessing$\_$alya}, called as \emph{system(postprocessing$\_$alya i)}, where \emph{i} is the simulation number, the \emph{binary} files generated at the end of each simulation are gathered in a directory located at the same level as \emph{simulation$\_$i}, $i = 0 \ldots nsamples - 1$, named \emph{alya$\_$output}, containing \emph{nsamples} nastin and solidz folders. \emph{Nastin} folders contain the binary data for \emph{pressure}, \emph{velocity}, \emph{mesh displacement} and \emph{mesh velocity} for each time step, whereas \emph{solidz} folders contain structure's \emph{displacement} data. From memory considerations, this tool \emph{moves} all files, which extension contain \emph{.post.}, from \emph{simulation$\_$i/nastin$\_$i} and \emph{simulation$\_$i/solidz$\_$i} to \emph{alya$\_$output/nastin$\_$i} and \emph{alya$\_$output/solidz$\_$i}, respectively. The processing of this files is done externally and it is be presented when the post-processing \emph{external tools} are described. The next step is to gather all \emph{watch point} files in a common folder, named \emph{data$\_$results/MCS/}, located in \emph{test case/uq code/} directory. This is realized via an external Python tool, called \emph{gather$\_$data$\_$mc}. The common location of the data files facilitates the next step of the post-processing, as described in the following.
+
+	After all data files are available, the \emph{statistical evaluation} of the chosen quantities of interest, or \emph{observables}, is realized according to the description presented in \refSection{sec:Monte Carlo Sampling}: the \emph{mean} and \emph{variance} are computed for each time step, as described in (add MCS algorithm reference from \refSection{sec:Monte Carlo Sampling}). After the statistics are computed, they are saved in file called \emph{Statistics.mc.txt}, located in a specifically created post-processing folder, \emph{postprocessing$\_$results/SCS/}, found at the same level as \emph{data$\_$results}. This ends the C++ specific implementation description, with the important remark that the described steps hold for \emph{all} considered dimensions. The above description is summarized in algorithm \ref{alg:MCS_preproc}.
+\begin{algorithm}
+\caption{C++ Post-processing for Monte Carlo Sampling
+\label{alg:MCS_preproc}}
+  \begin{algorithmic}[1]
+    \Require{$dimension$, $nsamples$ values \Comment{defined in the configuration file}}
+    \For{$i \gets 0 \textrm{ to } nsamples-1$}
+        \State call get$\_$alya$\_$output \Comment{move data from simulation$\_$i/ to alya$\_$output/}
+        \State call gather$\_$data$\_$mc \Comment{copy data from simulation$\_$i/ to data$\_$results/MCS/}
+        \State compute statistics for the chosen quantities of interest from the watch point
+    \EndFor
+  \end{algorithmic}
+\end{algorithm}
+\newline
+\textbf{Stochastic Collocations}
+\newline	
+	In the case of Stochastic Collocations, the C++ implementation of the post-processing step is more sophisticated that the one for Monte Carlo Sampling. Likewise, from a \emph{functional} point of view, there is no difference between the three dimensionality-based designs. The difference occurs at a \emph{non-functional} level, between classical and sparse grids approaches, as it was explained in \refChapter{chapter:Forward Propagation of Uncertainty}. The first two steps are the \emph{gathering} of the binary files and data files for the underlying \emph{watch point} for each time step, respectively, realized by get$\_$alya$\_$output and gather$\_$data$\_$sc tools, the latter being designed in a similar way as the corresponding one for Monte Carlo Sampling, which copies the corresponding data files in \emph{data$\_$results/SCS/}. After these steps are realized, the next part consist in \emph{accessing} all data saved in the \emph{watch point} and saved it locally, using STL vectors. This is done via a tandem consisting of a Python tool, which reads the data from each datafile and outputs it in the command line, and a C++ function, which reads the output by using functionality provided by the \emph{POSIX} library\footnote{all specific functions are found in \emph{cstdio} library}, followed by its local storage. The need for this step is motivated by the fact that the heart of Stochastic Collocations based on \emph{spectral approach} is the gPC \emph{expansion coefficients}. Hence, the next operation consist in \emph{computing} the coefficients, as presented in (add formulas for computing coefficients!!!), followed by the computation of the \emph{statistics}, described in (add formulas for SCS statistics!!!). These are steps are put together in the next algorithm:
+\begin{algorithm}
+\caption{C++ Post-processing for Stochastic Collocations
+\label{alg:SCS_preproc}}
+  \begin{algorithmic}[1]
+    \Require{$dimension$, $quadrature \ degree$ values \Comment{defined in the configuration file}}
+    \For{$i \gets 0 \textrm{ to } nsamples-1$}
+        \State call get$\_$alya$\_$output \Comment{move data from simulation$\_$i/ to alya$\_$output/}
+        \State call gather$\_$data$\_$sc \Comment{copy data from simulation$\_$i/ to data$\_$results/SCS/}
+        \State call get$\_$output$\_$sc \Comment{read and store data from all files in data$\_$results/SCS/}
+        \State compute gPC expansion coefficients
+        \State compute statistics for the chosen quantities of interest from the watch point
+    \EndFor
+  \end{algorithmic}
+\end{algorithm}
+
+	Besides what does the C++ implementation offer, there are several external tools that aid the post-processing step, for both Monte Carlo Sampling and Stochastic Collocations algorithms. The first one that is described is related to the \emph{Alya} package and is called \emph{alya2pos}. It is a Fortran based implementation, whose role is the \emph{transformation} of the \emph{binary} output of each simulation to \emph{ensight}\footnote{see \url{http://www-vis.lbl.gov/NERSC/Software/ensight/doc/OnlineHelp/UM-C11.pdf} for more details} format, which can be visualized using, e.g. Kitware's visualization package Paraview\footnote{see \url{http://www.paraview.org/} for more details}. It is executed as \emph{./alya2pos test$\_$case$\_$name}, where test$\_$case$\_$name is the chosen conventional name of the tested scenario (as an example, for the \emph{vertical flap} scenario, it is executed as \emph{./alya2pos Flap}). Having the entire output data in ensight format, offers many benefits because in this way, the data files contain numerical data which can be easily processed. Whereas the C++ implementation provides only the functionality for the computation of statistics of the underlying \emph{watch point}, several external tools were designed to compute the statistics of the \emph{entire simulation}, i.e. the \emph{mean} and \emph{variance} for each time step. For Monte Carlo Sampling, this process is straightforward, as the only needed quantities are the sum and the sum of squares, respectively, of all quantities. This is realized by two Python tools called \emph{MCS$\_$postprocessing$\_$mean} and \emph{MCS$\_$postprocessing$\_$var}, respectively. For Stochastic Collocations, before the statistics are computed, the first step is to \emph{compute} the gPC expansion coefficients, for each simulated time step. This is done with the aid of two tools, named \emph{SCS$\_$postprocessing$\_$NRV} and \emph{SCS$\_$postprocessing$\_$URV}. The first is used in case of normal random variables, whereas the second is employed in case of uniform random variables. After the coefficients are computed, via two other tools, called \emph{SCS$\_$postprocessing$\_$mean} and \emph{SCS$\_$postprocessing$\_$var}, the mean and the variance are being computed, respectively. A key feature of these tools is that they are \emph{dimension-independent} and hence, adding stochastic dimensions to the problem does not result in an increased cost for their usage.
+	Statistical moments offer a good statistical description of the considered quantity(ies) of interest. But often, this is enough. Considering that the \emph{forward propagation} of uncertain inputs result in a \emph{stochastic output},  besides the moments computation, a deeper description is  provided by the estimation of the \emph{probability density function}(pdf) of the underlying quantity of interest. This is realized by employing the \emph{kernel density estimation} procedure, described in \refSection{subsec:Kernel Density Estimation}. Using a \emph{Gaussian} kernel, two tools named \emph{MCS$\_$distr$\_$estimation} and \emph{SCS$\_$distr$\_$estimation}, respectively, were created to estimate the pdf at each time step. While in the case of Monte Carlo Sampling, the process of estimating the pdf is based on the set of outputs corresponding to the propagation of set of input samples, for Stochastic Collocations, this process differs. As previously described, the output of this algorithm consist in the of gPC expansion \emph{coefficients}. Hence, by using formula (add formula for gPC expansion from introUQ section), the stochastic output can be approximated. This is realized in a Monte Carlo-like fashion, by \emph{generating} a set of \emph{i.i.d.} random variables, serving as arguments for the expansion's corresponding hypergeometric polynomial (in this work, \emph{Legendre} or \emph{Hermite} polynomials). Hence, by applying the kernel density estimation methodology on the obtained set of stochastic outputs, the pdf estimation is performed. It is important to remark that this functionality is implemented only for one-dimensional simulations.
+	
+	

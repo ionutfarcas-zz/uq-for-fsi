@@ -1,0 +1,12 @@
+mean squared error for mean of x displacement: 
+6.2379956701e-10
+mean squared error for mean of x force: 
+0.000497388852586
+mean squared error for mean of y force: 
+0.000273610266212
+mean squared error for variance of x displacement: 
+9.60083676932e-14
+mean squared error for variance of x force: 
+0.000434959672903
+mean squared error for variance of y force: 
+0.000141050601545

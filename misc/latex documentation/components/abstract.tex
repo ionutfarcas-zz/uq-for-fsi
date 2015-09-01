@@ -1,0 +1,23 @@
+% Abstract for the TUM report document
+% Included by MAIN.TEX
+
+
+\clearemptydoublepage
+\phantomsection
+\addcontentsline{toc}{chapter}{Abstract}	
+
+
+
+
+
+\vspace*{2cm}
+\begin{center}
+{\Large \bf Abstract}
+\end{center}
+\vspace{1cm}
+
+	\textit{Fluid-Structure Interaction} (FSI) problems, where one or more structures interact with an internal or surrounding fluid flow, play prominent role in many scientific fields, that pose many challenges do to their strong non-linearity and multidisciplinary nature. Some of the most important challenges in FSI are \textit{multi-domain} character and \textit{interface coupling conditions}, combining \textit{different coordinate systems}, \textit{designing robust and efficient numerical methods} that ideally provide optimal convergence order and demand for \textit{high performance computing}, making FSI a complex domain by itself. Furthermore, \textit{uncertainty}, which appears naturally in most problems (\textit{e.g in density of fluid or/and material, viscosity of the fluid, etc}) is another challenge in FSI. This is modelled by \textit{Uncertainty Quantification} (UQ). One of the most important challenges in UQ is the \textit{multidimensional} stochastic problems. The classical approaches are \textit{computationally expensive} and are usually infeasible for more than few dimensions. In order to tackle these \textit{multi-challenges), one needs to use \textit{sophisticated mathematical methods} and \textit{high performance computing}.
+	
+	The aforementioned challenges constitute the motivation precursor for this thesis; using \textit{forward-propagation} of the uncertainty in input parameters, the aim is to \textit{investigate the uncertainty in FSI problems}, via \textit{sophisticated mathematical methods} and \textit{high performance computing} (multi-core architectures and parallel algorithms). In more details, \textit{non-intrusive} methods based on \textit{sampling} will be used. These methods are \textit{Monte Carlo sampling} (MCS) and \textit{Stochastic Collocations} (SC), that is based on \textit{generalized Polynomial Chaos} (gPC) methodology. While MCS uses multiple samples generated based on a prescribed \textit{probability density function} (pdf) which serve as input in the underlying deterministic numerical algorithm, SC approximates the solution on a prescribed set of points, called \textit{nodes}, which serve as collocations points. From this approximation, useful information (\textit{e.g. statistics}) can be easily extracted. Since for each \textit{sample} or \textit{node}, the numerical problems are \textit{independent} in both methods, these schemes are \textit{embarrassingly parallel}, hence suitable for high performance computing. One of the major differences between them is the \textit{convergence rate}; while the convergence rate is very slow for MCS, the one of SC is \textit{exponential in n} for suitable input pdfs. Due to the complex nature of FSI, the UQ methodology will be implemented on certain \textit{model FSI problems}.
+	
+	Lastly, \textit{multi-dimensional} stochastic problems are also being considered. Whereas MCS is independent of the dimensionality (and of the input pdf), in SC, in which numerical quadrature is employed, the \textit{curse of dimensionality} occurs. In order to overcome it, \textit{sparse grids} will be employed and to this extent, the SG++ library is to be used. 

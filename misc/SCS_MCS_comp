@@ -1,0 +1,452 @@
+#!/usr/bin/env python
+
+# script used for getting the quantities of interest (qoi) out of the collective 
+# datafile and plot them; for the current setting, the qoi are the displacement
+# on the x axis and force 0 and force 1
+
+from os import rename, remove
+from sys import argv, exit, stdout
+from traceback import print_exc
+from matplotlib.pyplot import *
+from pylab import plot, show
+from math import sqrt
+import numpy as np
+
+def correction():
+	correc = {0:1, 1:1, 2:1, 3:2, 4:1, 5:2, 6:6, 7:2, 8:2, 9:6, 10:24, 11:6, 12:4, 13:6, 14:24}
+
+	return correc
+
+# parse sc coeff file
+def parse_mc_file(datafile):
+	data_all = []
+
+	mean_disp_x_all = []
+	var_disp_x_all = []
+	mean_f0_all = []
+	var_f0_all = []
+	mean_f1_all = []
+	var_f1_all = []
+
+	try:
+		with open(datafile, 'r') as input_file:
+			for line in input_file:
+
+					line_tokens = line.split()
+					if len(line_tokens) !=0:
+						data_all.append(line_tokens[-1])
+
+		input_file.close()
+
+		no_of_timesteps = len(data_all)/6
+
+		for i in range(no_of_timesteps):
+			mean_disp_x_all.append(float(data_all[i*6]))
+			var_disp_x_all.append(float(data_all[i*6 + 1]))
+			mean_f0_all.append(float(data_all[i*6 + 2]))
+			var_f0_all.append(float(data_all[i*6 + 3]))
+			mean_f1_all.append(float(data_all[i*6 + 4]))
+			var_f1_all.append(float(data_all[i*6 + 5]))
+
+	except IOError:
+		print_exc(file = stdout)
+		exit(0)
+
+	return mean_disp_x_all, var_disp_x_all, mean_f0_all, var_f0_all, mean_f1_all, var_f1_all
+
+def parse_sc_file(datafile, no_of_coeff):
+	correc = correction()
+
+	mean_disp_x_all = []
+	var_disp_x_all = []
+	mean_f0_all = []
+	var_f0_all = []
+	mean_f1_all = []
+	var_f1_all = []
+
+	displacement_x = []
+	forces0 = []
+	forces1 = []
+
+	timestep_disp_x = []
+	timestep_forces0 = []
+	timestep_forces1 = []
+
+	m_disp_x = 0.
+	var_disp_x = 0.
+	m_f0_x = 0.
+	var_f0_x = 0.
+	m_f1_x = 0.
+	var_f1_x = 0.
+
+	try:
+		with open(datafile, 'r') as input_file:
+			for line in input_file:
+
+					line_tokens = line.split()
+
+					displacement_x.append(line_tokens[0])
+					forces0.append(line_tokens[1])
+					forces1.append(line_tokens[2])
+
+			displacement_x = np.array(displacement_x)
+			displacement_x = displacement_x.astype(np.float)
+			forces0 = np.array(forces0)
+			forces0 = forces0.astype(np.float)
+			forces1 = np.array(forces1)
+			forces1 = forces1.astype(np.float)
+
+			no_of_timesteps = len(displacement_x)/no_of_coeff
+
+			for i in range(no_of_timesteps):
+				for j in range(no_of_coeff):
+
+					timestep_disp_x.append(displacement_x[i*no_of_coeff + j]*sqrt(correc[j]))
+					timestep_forces0.append(forces0[i*no_of_coeff + j]*sqrt(correc[j]))
+					timestep_forces1.append(forces1[i*no_of_coeff + j]*sqrt(correc[j]))
+
+				timestep_disp_x = np.array(timestep_disp_x)
+				timestep_disp_x = timestep_disp_x.astype(np.float)
+				timestep_forces0 = np.array(timestep_forces0)
+				timestep_forces0 = timestep_forces0.astype(np.float)
+				timestep_forces1 = np.array(timestep_forces1)
+				timestep_forces1 = timestep_forces1.astype(np.float)
+
+				m_disp_x = timestep_disp_x[0]
+				var_disp_x = np.sum(coeff**2 for coeff in timestep_disp_x) - m_disp_x**2
+				m_f0 = timestep_forces0[0]
+				var_f0 = np.sum(coeff**2 for coeff in timestep_forces0) - m_f0**2
+				m_f1 = timestep_forces1[0]
+				var_f1 = np.sum(coeff**2 for coeff in timestep_forces1) - m_f1**2
+
+				mean_disp_x_all.append(m_disp_x)
+				var_disp_x_all.append(var_disp_x)
+				mean_f0_all.append(m_f0)
+				var_f0_all.append(var_f0)
+				mean_f1_all.append(m_f1)
+				var_f1_all.append(var_f1)
+
+				timestep_disp_x = []
+				timestep_forces0 = []
+				timestep_forces1 = []
+
+		input_file.close()
+		
+	except IOError:
+		print_exc(file = stdout)
+		exit(0)
+
+	return mean_disp_x_all, var_disp_x_all, mean_f0_all, var_f0_all, mean_f1_all, var_f1_all
+
+def diff_plot():
+	fig_mean, ax_mean = subplots(3)
+	fig_var, ax_var = subplots(3)
+
+	x_axis = np.linspace(0, no_of_timesteps, no_of_timesteps)
+
+	fig_mean.suptitle("mean fluid viscosity using SCS with bith distributions", fontsize=30)
+	fig_var.suptitle("variance fluid viscosity using SCS with bith distributions", fontsize=30)
+
+	ax_mean[0].plot(x_axis, mean_disp_x_all_1, 'r--', label=r'$\nu_f$' + ' normal distribution', linewidth=4.0)
+	ax_mean[0].plot(x_axis, mean_disp_x_all_2, 'g-.', label=r'$\nu_f$' + ' uniform distribution', linewidth=4.0)
+	ax_mean[0].set_ylabel('Mean of the x displacement', fontsize=20)
+	ax_mean[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_mean[0].legend(loc="best", fancybox=True, fontsize=20)
+	ax_mean[0].grid()
+	ax_mean[0].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_mean[1].plot(x_axis, mean_f0_all_1, 'r--', label=r'$\nu_f$' + ' normal distribution', linewidth=4.0)
+	ax_mean[1].plot(x_axis, mean_f0_all_2, 'g-.', label=r'$\nu_f$' + ' uniform distribution', linewidth=4.0)
+	ax_mean[1].set_ylabel('Mean of the x force', fontsize=20)
+	ax_mean[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_mean[1].legend(loc="best", fancybox=True, fontsize=20)
+	ax_mean[1].grid()
+	ax_mean[1].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_mean[2].plot(x_axis, mean_f1_all_1, 'r--', label=r'$\nu_f$' + ' normal distribution', linewidth=4.0)
+	ax_mean[2].plot(x_axis, mean_f1_all_2, 'g-.', label=r'$\nu_f$' + ' uniform distribution', linewidth=4.0)
+	ax_mean[2].set_ylabel('Mean of the y force', fontsize=20)
+	ax_mean[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_mean[2].legend(loc="best", fancybox=True, fontsize=20)
+	ax_mean[2].grid()
+	ax_mean[2].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_var[0].plot(x_axis, var_disp_x_all_1, 'r--', label=r'$\nu_f$' + ' normal distribution', linewidth=4.0)
+	ax_var[0].plot(x_axis, var_disp_x_all_2, 'g-.', label=r'$\nu_f$' + ' uniform distribution', linewidth=4.0)
+	ax_var[0].set_ylabel('Var of the x displacement', fontsize=20)
+	ax_var[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_var[0].legend(loc="best", fancybox=True, fontsize=20)
+	ax_var[0].grid()
+	ax_var[0].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_var[1].plot(x_axis, var_f0_all_1, 'r--', label=r'$\nu_f$' + ' normal distribution', linewidth=4.0)
+	ax_var[1].plot(x_axis, var_f0_all_2, 'g-.', label=r'$\nu_f$' + ' uniform distribution', linewidth=4.0)
+	ax_var[1].set_ylabel('Var of the x force', fontsize=20)
+	ax_var[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_var[1].legend(loc="best", fancybox=True, fontsize=20)
+	ax_var[1].grid()
+	ax_var[1].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_var[2].plot(x_axis, var_f1_all_1, 'r--', label=r'$\nu_f$' + ' normal distribution', linewidth=4.0)
+	ax_var[2].plot(x_axis, var_f1_all_2, 'g-.', label=r'$\nu_f$' + ' uniform distribution', linewidth=4.0)
+	ax_var[2].set_ylabel('Var of the y force', fontsize=20)
+	ax_var[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_var[2].legend(loc="best", fancybox=True, fontsize=20)
+	ax_var[2].grid()
+	ax_var[2].set_xlabel('no. of time steps', fontsize=20)
+
+	show()
+
+	fig_mean.savefig("images/mean_SCS_comp.png")
+	fig_var.savefig("images/var_SCS_comp.png")
+
+def relative_err_plot():
+	fig_err_mean, ax_err_mean = subplots(3)
+	fig_err_var, ax_err_var = subplots(3)
+
+	x_axis = np.linspace(0, no_of_timesteps, no_of_timesteps)
+
+	fig_err_mean.suptitle("mean's relative error: " + datafile1.split('.')[1] + "_" + datafile2.split('.')[1])
+	fig_err_var.suptitle("var's relative error: " + datafile1.split('.')[1] + "_" + datafile2.split('.')[1])
+
+	err_mean_disp_x = [abs(1 - item2/item1) for item1, item2 in zip(mean_disp_x_all_1, mean_disp_x_all_2)]
+	err_mean_f_x = [abs(1 - item2/item1) for item1, item2 in zip(mean_f0_all_1, mean_f0_all_2)]
+	err_mean_f_y = [abs(1 - item2/item1) for item1, item2 in zip(mean_f1_all_1, mean_f1_all_2)]
+
+	err_var_disp_x = [abs(1 - item2/item1) for item1, item2 in zip(var_disp_x_all_1, var_disp_x_all_2)]
+	err_var_f_x = [abs(1 - item2/item1) for item1, item2 in zip(var_f0_all_1, var_f0_all_2)]
+	err_var_f_y = [abs(1 - item2/item1) for item1, item2 in zip(var_f1_all_1, var_f1_all_2)]
+
+	ax_err_mean[0].loglog(x_axis, err_mean_disp_x, 'r--', label="err x displacement", linewidth=4.0)
+	ax_err_mean[0].set_ylabel('relative error of the x displacement')
+	ax_err_mean[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_mean[0].legend(loc="best", fancybox=True)
+	ax_err_mean[0].grid()
+	ax_err_mean[0].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_err_mean[1].loglog(x_axis, err_mean_f_x, 'r--', label="err x force", linewidth=4.0)
+	ax_err_mean[1].set_ylabel('relative error of the x force')
+	ax_err_mean[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_mean[1].legend(loc="best", fancybox=True)
+	ax_err_mean[1].grid()
+	ax_err_mean[1].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_err_mean[2].loglog(x_axis, err_mean_f_x, 'r--', label="err y force", linewidth=4.0)
+	ax_err_mean[2].set_ylabel('relative error of the y force')
+	ax_err_mean[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_mean[2].legend(loc="best", fancybox=True)
+	ax_err_mean[2].grid()
+	ax_err_mean[2].set_xlabel('no. of time steps', fontsize=20)
+
+
+	ax_err_var[0].loglog(x_axis, err_var_disp_x, 'r--', label="err x displacement", linewidth=4.0)
+	ax_err_var[0].set_ylabel('relative error of the x displacement')
+	ax_err_var[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_var[0].legend(loc="best", fancybox=True)
+	ax_err_var[0].grid()
+	ax_err_var[0].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_err_var[1].loglog(x_axis, err_var_f_x, 'r--', label="err x force", linewidth=4.0)
+	ax_err_var[1].set_ylabel('relative error of the x force')
+	ax_err_var[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_var[1].legend(loc="best", fancybox=True)
+	ax_err_var[1].grid()
+	ax_err_var[1].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_err_var[2].loglog(x_axis, err_var_f_x, 'r--', label="err y force", linewidth=4.0)
+	ax_err_var[2].set_ylabel('relative error of the y force')
+	ax_err_var[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_var[2].legend(loc="best", fancybox=True)
+	ax_err_var[2].grid()
+	ax_err_var[2].set_xlabel('no. of time steps', fontsize=20)
+
+	show()
+
+	fig_err_mean.savefig("images/" + "mean_relative_err_" + datafile1.split('.')[1] + "_" + datafile2.split('.')[1] + ".png")
+	fig_err_var.savefig("images/" + "var_relative_err_" + datafile1.split('.')[1] + "_" + datafile2.split('.')[1] + ".png")
+
+def absolute_err_plot():
+	fig_err_mean, ax_err_mean = subplots(3)
+	fig_err_var, ax_err_var = subplots(3)
+
+	x_axis = np.linspace(0, no_of_timesteps, no_of_timesteps)
+
+	fig_err_mean.suptitle("mean's absolute error: " + datafile1.split('.')[1] + "_" + datafile1.split('.')[1])
+	fig_err_var.suptitle("var's absolute error: " + datafile1.split('.')[1] + "_" + datafile1.split('.')[1])
+
+	err_mean_disp_x = [abs(item1 - item2) for item1, item2 in zip(mean_disp_x_all_1, mean_disp_x_all_2)]
+	err_mean_f_x = [abs(item1 - item2) for item1, item2 in zip(mean_f0_all_1, mean_f0_all_2)]
+	err_mean_f_y = [abs(item1 - item2) for item1, item2 in zip(mean_f1_all_1, mean_f1_all_2)]
+
+	err_var_disp_x = [abs(item1 - item2) for item1, item2 in zip(var_disp_x_all_1, var_disp_x_all_2)]
+	err_var_f_x = [abs(item1 - item2) for item1, item2 in zip(var_f0_all_1, var_f0_all_2)]
+	err_var_f_y = [abs(item1 - item2) for item1, item2 in zip(var_f1_all_1, var_f1_all_2)]
+
+	ax_err_mean[0].loglog(x_axis, err_mean_disp_x, 'r--', label="err x displacement", linewidth=4.0)
+	ax_err_mean[0].set_ylabel('absolute error of the x displacement')
+	ax_err_mean[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_mean[0].legend(loc="best", fancybox=True)
+	ax_err_mean[0].grid()
+	ax_err_mean[0].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_err_mean[1].loglog(x_axis, err_mean_f_x, 'r--', label="err x force", linewidth=4.0)
+	ax_err_mean[1].set_ylabel('absolute error of the x force')
+	ax_err_mean[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_mean[1].legend(loc="best", fancybox=True)
+	ax_err_mean[1].grid()
+	ax_err_mean[1].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_err_mean[2].loglog(x_axis, err_mean_f_x, 'r--', label="err y force", linewidth=4.0)
+	ax_err_mean[2].set_ylabel('absolute error of the y force')
+	ax_err_mean[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_mean[2].legend(loc="best", fancybox=True)
+	ax_err_mean[2].grid()
+	ax_err_mean[2].set_xlabel('no. of time steps', fontsize=20)
+
+
+	ax_err_var[0].loglog(x_axis, err_var_disp_x, 'r--', label="err x displacement", linewidth=4.0)
+	ax_err_var[0].set_ylabel('absolute error of the x displacement')
+	ax_err_var[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_var[0].legend(loc="best", fancybox=True)
+	ax_err_var[0].grid()
+	ax_err_var[0].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_err_var[1].loglog(x_axis, err_var_f_x, 'r--', label="err x force", linewidth=4.0)
+	ax_err_var[1].set_ylabel('absolute error of the x force')
+	ax_err_var[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_var[1].legend(loc="best", fancybox=True)
+	ax_err_var[1].grid()
+	ax_err_var[1].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_err_var[2].loglog(x_axis, err_var_f_x, 'r--', label="err y force", linewidth=4.0)
+	ax_err_var[2].set_ylabel('absolute error of the y force')
+	ax_err_var[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_var[2].legend(loc="best", fancybox=True)
+	ax_err_var[2].grid()
+	ax_err_var[2].set_xlabel('no. of time steps', fontsize=20)
+
+	show()
+
+	fig_err_mean.savefig("images/" + "mean_absolute_err_" + datafile1.split('.')[1] + "_" + datafile2.split('.')[1] + ".png")
+	fig_err_var.savefig("images/" + "var_absolute_err_" + datafile1.split('.')[1] + "_" + datafile2.split('.')[1] + ".png")
+
+def squared_err_plot():
+	fig_err_mean, ax_err_mean = subplots(3)
+	fig_err_var, ax_err_var = subplots(3)
+
+	x_axis = np.linspace(0, no_of_timesteps, no_of_timesteps)
+
+	fig_err_mean.suptitle("mean's squared error: " + datafile1.split('.')[1] + "_" + datafile2.split('.')[1])
+	fig_err_var.suptitle("var's squared error: " + datafile1.split('.')[1] + "_" + datafile2.split('.')[1])
+
+	err_mean_disp_x = [abs(item1 - item2)**2 for item1, item2 in zip(mean_disp_x_all_1, mean_disp_x_all_2)]
+	err_mean_f_x = [abs(item1 - item2)**2 for item1, item2 in zip(mean_f0_all_1, mean_f0_all_2)]
+	err_mean_f_y = [abs(item1 - item2)**2 for item1, item2 in zip(mean_f1_all_1, mean_f1_all_2)]
+
+	err_var_disp_x = [abs(item1 - item2)**2 for item1, item2 in zip(var_disp_x_all_1, var_disp_x_all_2)]
+	err_var_f_x = [abs(item1 - item2)**2 for item1, item2 in zip(var_f0_all_1, var_f0_all_2)]
+	err_var_f_y = [abs(item1 - item2)**2 for item1, item2 in zip(var_f1_all_1, var_f1_all_2)]
+
+	ax_err_mean[0].loglog(x_axis, err_mean_disp_x, 'r--', label="err x displacement", linewidth=4.0)
+	ax_err_mean[0].set_ylabel('squared error of the x displacement')
+	ax_err_mean[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_mean[0].legend(loc="best", fancybox=True)
+	ax_err_mean[0].grid()
+	ax_err_mean[0].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_err_mean[1].loglog(x_axis, err_mean_f_x, 'r--', label="err x force", linewidth=4.0)
+	ax_err_mean[1].set_ylabel('squared error of the x force')
+	ax_err_mean[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_mean[1].legend(loc="best", fancybox=True)
+	ax_err_mean[1].grid()
+	ax_err_mean[1].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_err_mean[2].loglog(x_axis, err_mean_f_x, 'r--', label="err y force", linewidth=4.0)
+	ax_err_mean[2].set_ylabel('squared error of the y force')
+	ax_err_mean[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_mean[2].legend(loc="best", fancybox=True)
+	ax_err_mean[2].grid()
+	ax_err_mean[2].set_xlabel('no. of time steps', fontsize=20)
+
+
+	ax_err_var[0].loglog(x_axis, err_var_disp_x, 'r--', label="err x displacement", linewidth=4.0)
+	ax_err_var[0].set_ylabel('squared error of the x displacement')
+	ax_err_var[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_var[0].legend(loc="best", fancybox=True)
+	ax_err_var[0].grid()
+	ax_err_var[0].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_err_var[1].loglog(x_axis, err_var_f_x, 'r--', label="err x force", linewidth=4.0)
+	ax_err_var[1].set_ylabel('squared error of the x force')
+	ax_err_var[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_var[1].legend(loc="best", fancybox=True)
+	ax_err_var[1].grid()
+	ax_err_var[1].set_xlabel('no. of time steps', fontsize=20)
+
+	ax_err_var[2].loglog(x_axis, err_var_f_x, 'r--', label="err y force", linewidth=4.0)
+	ax_err_var[2].set_ylabel('squared error of the y force')
+	ax_err_var[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_err_var[2].legend(loc="best", fancybox=True)
+	ax_err_var[2].grid()
+	ax_err_var[2].set_xlabel('no. of time steps', fontsize=20)
+
+	show()
+
+	fig_err_mean.savefig("images/" + "mean_squared_err_" + datafile1.split('.')[1] + "_" + datafile2.split('.')[1] + ".png")
+	fig_err_var.savefig("images/" + "var_squared_err_" + datafile1.split('.')[1] + "_" + datafile2.split('.')[1] + ".png")
+
+def get_mean_squared_error():
+	err_mean_disp_x = [abs(item1 - item2)**2 for item1, item2 in zip(mean_disp_x_all_1, mean_disp_x_all_2)]
+	err_mean_f_x = [abs(item1 - item2)**2 for item1, item2 in zip(mean_f0_all_1, mean_f0_all_2)]
+	err_mean_f_y = [abs(item1 - item2)**2 for item1, item2 in zip(mean_f1_all_1, mean_f1_all_2)]
+
+	err_var_disp_x = [abs(item1 - item2)**2 for item1, item2 in zip(var_disp_x_all_1, var_disp_x_all_2)]
+	err_var_f_x = [abs(item1 - item2)**2 for item1, item2 in zip(var_f0_all_1, var_f0_all_2)]
+	err_var_f_y = [abs(item1 - item2)**2 for item1, item2 in zip(var_f1_all_1, var_f1_all_2)]
+
+	mean_squared_mean_err_disp_x = sum(err_mean_disp_x)/no_of_timesteps
+	mean_squared_mean_err_force_x = sum(err_mean_f_x)/no_of_timesteps
+	mean_squared_mean_err_force_y = sum(err_mean_f_y)/no_of_timesteps
+
+	mean_squared_var_err_disp_x = sum(err_var_disp_x)/no_of_timesteps
+	mean_squared_var_err_force_x = sum(err_var_f_x)/no_of_timesteps
+	mean_squared_var_err_force_y = sum(err_var_f_y)/no_of_timesteps
+
+	return mean_squared_mean_err_disp_x, mean_squared_mean_err_force_x, mean_squared_mean_err_force_y, mean_squared_var_err_disp_x, mean_squared_var_err_force_x, mean_squared_var_err_force_y
+	
+if __name__ == "__main__":
+
+	if len(argv) != 5:
+		print "Error in " + argv[0] + "!"
+		print "Usage: " + argv[0] + " datafile_sc datafile_mc no_of_coeff_sc"
+		exit(0)
+
+	datafile1 = argv[1]
+	datafile2 = argv[2]
+	no_of_coeff_sc = int(argv[3])
+	no_of_coeff_sc_2 = int(argv[4])
+
+	mean_disp_x_all_1, var_disp_x_all_1, mean_f0_all_1, var_f0_all_1, mean_f1_all_1, var_f1_all_1 = parse_sc_file(datafile1, no_of_coeff_sc)
+	mean_disp_x_all_2, var_disp_x_all_2, mean_f0_all_2, var_f0_all_2, mean_f1_all_2, var_f1_all_2 = parse_sc_file(datafile2, no_of_coeff_sc_2)
+
+	no_of_timesteps = len(mean_disp_x_all_1)
+
+	diff_plot()
+	# relative_err_plot()
+	# absolute_err_plot()
+	# squared_err_plot()
+	err1, err2, err3, err4, err5, err6 = get_mean_squared_error()
+
+	print 'mean squared error for mean of x displacement: '
+	print err1
+	print 'mean squared error for mean of x force: '
+	print err2
+	print 'mean squared error for mean of y force: '
+	print err3
+
+	print 'mean squared error for variance of x displacement: '
+	print err4
+	print 'mean squared error for variance of x force: '
+	print err5
+	print 'mean squared error for variance of y force: '
+	print err6

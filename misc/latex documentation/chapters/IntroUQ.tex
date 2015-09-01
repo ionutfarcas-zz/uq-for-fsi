@@ -1,0 +1,129 @@
+\chapter{Forward Propagation of Uncertainty}
+\label{chapter:Forward Propagation of Uncertainty}
+\begin{itemize}
+\item Brief summary of what the chapter will contain
+\end{itemize}
+\section{Theoretical Background}
+\label{sec:Theoretical Background}
+\begin{itemize}
+\item Explain what is forward propagation of uncertainty
+\item What is assumed to be known
+\item ..
+\end{itemize}
+\section{Probabilistic Modelling}
+\label{sec:Probabilistic Modelling}
+\begin{itemize}
+\item Introduce a generic probabilistic space, where the stochastic modelling is made
+\item Reminder of what are univariate and multivariate random variables
+\item Important: we work only with iid random vars; plus what this implies
+\item Formulas for expectation and variance for one dim and multi dim rand vars
+\item ...
+\end{itemize}	
+\section{Overview of Sampling Methods}
+\label{sec:Overview of Sampling Methods}
+\begin{itemize}
+\item Brief reminder of what sampling methods are and specify some examples
+\item Explain polynomial and generalized polynomial chaos methodology (from Wiener until Xiu and collaborators)
+\item Why to use gPC (e.g. because of the advancements in HPC, etc)
+\item Literature review
+\item ...
+\end{itemize}	
+\section{Monte Carlo Sampling}
+\label{sec:Monte Carlo Sampling}
+\begin{itemize}
+\item Overview of Monte Carlo methodology in the UQ context
+\item ...
+\end{itemize}	
+\subsection{One-Dimensional Case}
+\label{subsec:One-Dimensional Case}
+\begin{itemize}
+\item Describe the algorithm in a one-dimensional stochastic setting
+\item ...
+\end{itemize}	
+\subsection{Multi-Dimensional Case}
+\label{subsec:Multi-Dimensional Case}
+\begin{itemize}
+\item Describe the algorithm in a multi-dimensional stochastic setting
+\item ...
+\end{itemize}
+\subsection{Convergence Analysis and Properties}
+\label{subsec:Convergence Analysis and Properties}
+\begin{itemize}
+\item Properties: e.g. Convergence for generic Monte Carlo sampling + ways to improve it (e.g. quasi Monte Carlo), independence of dimension, distribution, parallelization, numerical errors, etc
+\item Pros and Cons; Motivate Collocations
+\end{itemize}	
+\section{Stochastic Collocations}
+\label{sec:Stochastic Collocations}
+\begin{itemize}
+\item Briefly explain what collocations are
+\item Specify that MCS is just a particular case of collocations, using the delta function as stochastic basis
+\item ...
+\end{itemize}
+\subsection{Pseudo-spectral Approach}
+\label{subsec:Gaussian Quadrature}
+\begin{itemize}
+\item Describe what does the pseudo-spectral approach look like and that is based on quadrature
+\item Explain Gauss based quadrature: Gauss-Hermite and Gauss-Legendre
+\item Explain how to compute the statistics with this approach
+\item Explain the restrictions imposed to the mean and standard deviation of the random variable $(\sqrt{2}*node*stddev + mean > 0 => mean/stddev > - \sqrt{2}*node!)$
+\item ...
+\end{itemize}	
+\subsection{One-Dimensional Case}
+\label{subsec:One-Dimensional Case}
+\begin{itemize}
+\item Describe the algorithm in a one-dimensional stochastic setting
+\item ..
+\end{itemize}	
+\subsection{Multi-Dimensional Case}
+\label{subsec:Multi-Dimensional Case}
+\begin{itemize}
+\item Describe the algorithm in a multi-dimensional stochastic setting
+\item Curse of dimensionality with brute force approach
+\item ..
+\end{itemize}
+\subsection{Convergence Analysis and Properties}
+\label{subsec:Convergence Analysis and Properties}
+\begin{itemize}
+\item Properties: convergence (exponential also outside the Askey scheme!!), parallelization, non-intrusive, dependence on distribution and dim, numerical errors, etc
+\item Pros and Cons of the method 
+\item ...
+\end{itemize}	
+\section{Sparse Grids Stochastic Collocations}
+\label{sec:Sparse Grids Stochastic Collocations}
+\begin{itemize}
+\item Brief overview of SG-SCS
+\item A way to (partially) break the curse of dimensionality
+\item ...
+\end{itemize}
+\subsection{Overview of Sparse Grids}
+\label{subsec:Overview of Sparse Grids}
+\begin{itemize}
+\item Overview of sparse grid methodology
+\item Quadrature on sparse grids
+\item ...
+\end{itemize}	
+\subsection{Sparse Grids Toolbox SG++}
+\label{subsec:Sparse Grids Toolbox SG++}
+\begin{itemize}
+\item Brief overview of SG++ and its capabilities
+\item Explain how quadrature works within SG++
+\item Improvements gained from using SG++ (no of collocation points, memory, convergence, etc)
+\item ...
+\end{itemize}
+\section{Probability Density Function Estimation}
+\label{sec:Probability Density Function Estimation}
+\subsection{General Description}
+\label{subsec:General Description}
+\begin{itemize}
+\item Overview of what density estimation is and why we use it here
+\item Some methods: brute force, KDE, etc
+\item ...
+\end{itemize}
+\subsection{Kernel Density Estimation}
+\label{subsec:Kernel Density Estimation}
+\begin{itemize}
+\item Explain what KDE is
+\item Examples of Kernels
+\item Implementation using Python scikit toolbox
+\item ...
+\end{itemize}

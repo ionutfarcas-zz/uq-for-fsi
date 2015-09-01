@@ -1,0 +1,317 @@
+#!/usr/bin/env python
+
+from sys import argv, exit, stdout
+from os import listdir, chdir, getcwd, makedirs
+from os.path import isfile, join, exists
+from re import sub
+from numpy import array, mean, math, pi
+from traceback import print_exc
+from math import sqrt
+
+files_paths = []
+back_path = "../../"
+
+def legendre_poly(deg, var):
+	try:
+		poly_val = 0.0
+
+		if deg == 0:
+			poly_val = 1.0
+		elif deg == 1:
+			poly_val = var
+		else:
+			poly_val = ((2*deg - 1)*var*legendre_poly(deg-1, var) - (deg - 1)*legendre_poly(deg - 2, var))/deg
+
+		return poly_val
+	except:
+		print_exc(file = stdout)
+		exit(0)
+
+def nodes_weights(deg):
+	nodes = []
+	weights = []
+
+	if deg == 1:
+		nodes.append(0.0000)
+		weights.append(2.0000)
+
+	elif deg == 2:
+		nodes.append(-0.5773)
+		nodes.append(0.5773)
+		weights.append(1.0000)
+		weights.append(1.0000)
+		
+	elif deg == 3:
+		nodes.append(-0.77459)
+		nodes.append(0.0000)
+		nodes.append(0.77459)
+		weights.append(0.5555)
+		weights.append(0.8888)
+		weights.append(0.5555)
+		
+	elif deg == 4:
+		nodes.append(-0.8611)
+		nodes.append(-0.3399)
+		nodes.append(0.3399)
+		nodes.append(0.8611)
+		weights.append(0.3478)
+		weights.append(0.6521)
+		weights.append(0.6521)
+		weights.append(0.3478)
+		
+	elif deg == 5:
+		nodes.append(-0.9061)
+		nodes.append(-0.5384)
+		nodes.append(0.0000)
+		nodes.append(0.5384)
+		nodes.append(0.9061)
+		weights.append(0.2369)
+		weights.append(0.4786)
+		weights.append(0.5688)
+		weights.append(0.4786)
+		weights.append(0.2369)
+		
+	elif deg == 6:
+		nodes.append(-0.9324)
+		nodes.append(-0.6612)
+		nodes.append(-0.2386)
+		nodes.append(0.2386)
+		nodes.append(0.6612)
+		nodes.append(0.9324)
+		weights.append(0.1713)
+		weights.append(0.3607)
+		weights.append(0.4679)
+		weights.append(0.4679)
+		weights.append(0.3607)
+		weights.append(0.1713)
+		
+	elif deg == 7:
+		nodes.append(-0.9491)
+		nodes.append(-0.7415)
+		nodes.append(-0.4058)
+		nodes.append(0.0000)
+		nodes.append(0.4058)
+		nodes.append(0.7415)
+		nodes.append(0.9491)
+		weights.append(0.1294)
+		weights.append(0.2797)
+		weights.append(0.3818)
+		weights.append(0.4179)
+		weights.append(0.3818)
+		weights.append(0.2797)
+		weights.append(0.1294)
+
+	elif deg == 8:
+		nodes.append(-0.9602)
+		nodes.append(-0.7966)
+		nodes.append(-0.5255)
+		nodes.append(-0.1834)
+		nodes.append(0.1834)
+		nodes.append(0.5255)
+		nodes.append(0.7966)
+		nodes.append(0.9602)
+		weights.append(0.1012)
+		weights.append(0.2223)
+		weights.append(0.3137)
+		weights.append(0.3626)
+		weights.append(0.3626)
+		weights.append(0.3137)
+		weights.append(0.2223)
+		weights.append(0.1012)
+		
+	elif deg == 9:
+		nodes.append(-0.9681)
+		nodes.append(-0.8360)
+		nodes.append(-0.6133)
+		nodes.append(-0.3242)
+		nodes.append(0.0000)
+		nodes.append(0.3242)
+		nodes.append(0.6133)
+		nodes.append(0.8360)
+		nodes.append(0.9681)
+		weights.append(0.0812)
+		weights.append(0.1806)
+		weights.append(0.2606)
+		weights.append(0.3123)	
+		weights.append(0.3302)
+		weights.append(0.3123)
+		weights.append(0.2606)
+		weights.append(0.1806)
+		weights.append(0.0812)
+		
+	elif deg == 10:
+		nodes.append(-0.9739)
+		nodes.append(-0.8650)
+		nodes.append(-0.6794)
+		nodes.append(-0.4333)
+		nodes.append(-0.1488)
+		nodes.append(0.1488)
+		nodes.append(0.4333)
+		nodes.append(0.6794)
+		nodes.append(0.8650)
+		nodes.append(0.9739)
+		weights.append(0.0666)
+		weights.append(0.1494)
+		weights.append(0.2190)
+		weights.append(0.2692)
+		weights.append(0.2955)
+		weights.append(0.2955)
+		weights.append(0.2692)
+		weights.append(0.2190)
+		weights.append(0.1494)
+		weights.append(0.0666)
+	else:
+		print "Please input a smaller quadrature degree!"
+		exit(0)
+
+	nodes = array(nodes)
+	weights = array(weights)
+
+	return nodes, weights
+
+def norm_factor(deg):
+
+	return 2.0/(2.0*deg + 1.0)
+
+def import_datafiles(no_of_simulations, base_path, files_type):
+	files = []
+	files_all = []
+	files_no = []
+
+	try:
+		for i in range(no_of_simulations):
+			files_path = base_path + str(i + 1)
+			files_paths.append(files_path)
+
+			files = [ f for f in listdir(files_path) if f.startswith(files_type) ]
+			files.sort()
+			files_all.append(files_path)
+			files_all.append(files)
+
+		for _file in files:
+			file_no = sub(files_type, '', _file)
+			files_no.append(file_no)
+			files_no.sort()
+	except:
+		print_exc(file = stdout)
+		exit(0)
+
+	return files_all, files_no
+
+def get_same_files(no_of_simulations, all_files, files_type, files_no, dim):
+	all_same_files = []
+
+	try:
+		if dim != 0:
+			for i in range(dim):
+				list_of_same_files = 'data_file_' + str(i + 1)
+				list_of_same_files = []
+
+				for one_sim_files in all_files:
+
+					for path in files_paths:
+						if path == one_sim_files:
+							name = one_sim_files
+
+					for sim_files in one_sim_files:
+						file_name = files_type + files_no[i]
+
+						if sim_files == file_name:
+							list_of_same_files.append(name)
+							list_of_same_files.append(sim_files)
+
+				all_same_files.append(list_of_same_files)
+	except:
+		print_exc(file = stdout)
+		exit(0)
+
+	return all_same_files
+
+def get_coefficients(all_same_files, out_path, no_of_simulations, no_of_coefficients):
+	nodes, weights = nodes_weights(no_of_simulations)
+
+	try:
+		for j in range(no_of_coefficients):
+			out_path = out_path + str(j)
+			
+			if not exists(out_path):
+				makedirs(out_path)
+
+			for files in all_same_files:
+				length = len(files)
+
+				data_one_file_type = []
+				data_out = []
+				out_file = None
+
+				for i in range(length):
+					if i%2 == 0:
+						for path in files_paths:
+							if files[i] == path:
+								path_to_file = files[i]
+					else:
+						data = []
+						
+						chdir(path_to_file)
+						files_header = []
+
+						with open(files[i], 'r') as data_file:
+							for line in data_file:
+								if line[1].isdigit() or line[2].isdigit():
+									data.append(line)
+								else:
+									files_header.append(line)
+					
+						data = [float(item) for item in data]
+						
+						data_file.close()
+						chdir(back_path)
+
+						data_one_file_type.append(data)
+
+				# after gathering data from all same files, perform numerical quadrature
+				for num_sol_value in zip(*data_one_file_type):
+					coeff = 0.
+
+					for i in range(no_of_simulations):
+						coeff += num_sol_value[i]*legendre_poly(j, nodes[i]) * weights[i]
+					coeff = coeff/sqrt(norm_factor(j))
+
+					data_out.append(coeff)
+				
+				out_file = files[1]
+
+				chdir(out_path)
+				with open(out_file, 'w') as mean_file:
+					for item in files_header:
+						mean_file.write(str(item))
+					for item in data_out:
+						mean_file.write(str(item) + '\n')
+				
+				mean_file.close()
+				chdir(back_path)
+
+			out_path = out_path[:-1]
+
+	except:
+		print_exc(file = stdout)
+		exit(0)
+
+if __name__=="__main__":
+
+	if len(argv) != 6:
+		print "Error in " + argv[0] + "!"
+		print "Usage: " + argv[0] + " data_path files_type out_path no_of_simulations no_of_coefficients"
+		exit(0)
+
+	path =  argv[1]
+	files_type = argv[2]
+	out_path = argv[3]
+	no_of_simulations = int(argv[4])
+	no_of_coefficients = int(argv[5])
+
+	all_filess, files_no = import_datafiles(no_of_simulations, path, files_type)
+	dim = len(files_no)
+
+	all_same_files =  get_same_files(no_of_simulations, all_filess, files_type, files_no, dim)	
+	get_coefficients(all_same_files, out_path, no_of_simulations, no_of_coefficients)

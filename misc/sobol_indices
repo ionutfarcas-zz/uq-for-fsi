@@ -1,0 +1,434 @@
+#!/usr/bin/env python
+
+from os import rename, remove
+from sys import argv, exit, stdout
+from traceback import print_exc
+from matplotlib.pyplot import *
+from pylab import plot, show
+import numpy as np
+from math import sqrt
+
+def mindex_dict():
+	mindex = {(0, 0):0, (1, 0):1, (0, 1):2, (2, 0):1, (1, 1):3, (0, 2):2, (3, 0):1, (2, 1):3, (1, 2):3, (0, 3):2, (4, 0):1, (3, 1):3, (2, 2):3, (1, 3):3, (0, 4):2}
+
+	return mindex
+
+def coeff_dict():
+	c_dict = {0:0, 1:1, 2:2, 3:1, 4:3, 5:2, 6:1, 7:3, 8:3, 9:2, 10:1, 11:3, 12:3, 13:3, 14:2}
+
+	return c_dict
+
+# def correction():
+# 	correc = {0:1, 1:1, 2:1, 3:2, 4:1, 5:2, 6:6, 7:2, 8:2, 9:6, 10:24, 11:6, 12:4, 13:6, 14:24}
+
+# 	return correc
+
+def correction():
+	correc = {0:1, 1:1, 2:1, 3:1, 4:1, 5:1, 6:1, 7:1, 8:1, 9:1, 10:1, 11:1, 12:1, 13:1, 14:1}
+
+	return correc
+
+def get_Sobol_indices(datafile, no_of_coeff, dict_of_coeff):
+	correc = correction()
+
+	displacement_x = []
+	forces0 = []
+	forces1 = []
+	
+	timestep_disp_x = []
+	timestep_forces0 = []
+	timestep_forces1 = []
+	var_disp_x_s1 = []
+	var_disp_x_s2 = []
+	var_disp_x_s1_2 = []
+	var_f0_s1 = []
+	var_f0_s2 = []
+	var_f0_s1_2 = []
+	var_f1_s1 = []
+	var_f1_s2 = []
+	var_f1_s1_2 = []
+	tot_disp_x_s1 = []
+	tot_disp_x_s2 = []
+	tot_f0_s1 = []
+	tot_f0_s2 = []
+	tot_f1_s1 = []
+	tot_f1_s2 = []
+	
+
+	m_disp_x = 0.
+	m_f0 = 0.
+	m_f1 = 0.
+
+	var_disp_x = 0.
+	var_f0_x = 0.
+	var_f1_x = 0.
+	var_d_x_s1 = 0.
+	var_d_x_s2 = 0.
+	var_d_x_s1_2 = 0.
+	var_f_x_s1 = 0.
+	var_f_x_s2 = 0.
+	var_f_x_s1_2 = 0.
+	var_f_y_s1 = 0.
+	var_f_y_s2 = 0.
+	var_f_y_s1_2 = 0.
+	tot_d_x_s1 = 0.
+	tot_d_x_s2 = 0.
+	tot_f_x_s1 = 0.
+	tot_f_x_s2 = 0.
+	tot_f_y_s1 = 0.
+	tot_f_y_s2 = 0.
+
+	try:
+		with open(datafile, 'r') as input_file:
+			for line in input_file:
+
+					line_tokens = line.split()
+
+					displacement_x.append(line_tokens[0])
+					forces0.append(line_tokens[1])
+					forces1.append(line_tokens[2])
+
+			displacement_x = np.array(displacement_x)
+			displacement_x = displacement_x.astype(np.float)
+			forces0 = np.array(forces0)
+			forces0 = forces0.astype(np.float)
+			forces1 = np.array(forces1)
+			forces1 = forces1.astype(np.float)
+
+			no_of_timesteps = len(displacement_x)/no_of_coeff
+
+			for i in range(no_of_timesteps):
+				for j in range(no_of_coeff):
+
+					timestep_disp_x.append(displacement_x[i*no_of_coeff + j]*sqrt(correc[j]))
+					timestep_forces0.append(forces0[i*no_of_coeff + j]*sqrt(correc[j]))
+					timestep_forces1.append(forces1[i*no_of_coeff + j]*sqrt(correc[j]))
+
+					if dict_of_coeff[j] == 1:
+						var_disp_x_s1.append(displacement_x[i*no_of_coeff + j]*sqrt(correc[j]))
+						var_f0_s1.append(forces0[i*no_of_coeff + j]*sqrt(correc[j]))
+						var_f1_s1.append(forces1[i*no_of_coeff + j]*sqrt(correc[j]))
+
+						tot_disp_x_s1.append(displacement_x[i*no_of_coeff + j]*sqrt(correc[j]))
+						tot_f0_s1.append(forces0[i*no_of_coeff + j]*sqrt(correc[j]))
+						tot_f1_s1.append(forces1[i*no_of_coeff + j]*sqrt(correc[j]))
+
+					elif dict_of_coeff[j] == 2:
+						var_disp_x_s2.append(displacement_x[i*no_of_coeff + j]*sqrt(correc[j]))
+						var_f0_s2.append(forces0[i*no_of_coeff + j]*sqrt(correc[j]))
+						var_f1_s2.append(forces1[i*no_of_coeff + j]*sqrt(correc[j]))
+
+						tot_disp_x_s2.append(displacement_x[i*no_of_coeff + j]*sqrt(correc[j]))
+						tot_f0_s2.append(forces0[i*no_of_coeff + j]*sqrt(correc[j]))
+						tot_f1_s2.append(forces1[i*no_of_coeff + j]*sqrt(correc[j]))
+
+					elif dict_of_coeff[j] == 3:
+						var_disp_x_s1_2.append(displacement_x[i*no_of_coeff + j]*sqrt(correc[j]))
+						var_f0_s1_2.append(forces0[i*no_of_coeff + j]*sqrt(correc[j]))
+						var_f1_s1_2.append(forces1[i*no_of_coeff + j]*sqrt(correc[j]))
+
+						tot_disp_x_s1.append(displacement_x[i*no_of_coeff + j]*sqrt(correc[j]))
+						tot_f0_s1.append(forces0[i*no_of_coeff + j]*sqrt(correc[j]))
+						tot_f1_s1.append(forces1[i*no_of_coeff + j]*sqrt(correc[j]))
+						tot_disp_x_s2.append(displacement_x[i*no_of_coeff + j]*sqrt(correc[j]))
+						tot_f0_s2.append(forces0[i*no_of_coeff + j]*sqrt(correc[j]))
+						tot_f1_s2.append(forces1[i*no_of_coeff + j]*sqrt(correc[j]))
+
+				timestep_disp_x = np.array(timestep_disp_x)
+				timestep_disp_x = timestep_disp_x.astype(np.float)
+				timestep_forces0 = np.array(timestep_forces0)
+				timestep_forces0 = timestep_forces0.astype(np.float)
+				timestep_forces1 = np.array(timestep_forces1)
+				timestep_forces1 = timestep_forces1.astype(np.float)
+
+				var_disp_x_s1 = np.array(var_disp_x_s1, dtype='float') 
+				var_disp_x_s2 = np.array(var_disp_x_s2, dtype='float')
+				var_disp_x_s1_2 = np.array(var_disp_x_s1_2, dtype='float')
+				var_f0_s1 = np.array(var_f0_s1, dtype='float')
+				var_f0_s2 = np.array(var_f0_s2, dtype='float')
+				var_f0_s1_2 = np.array(var_f0_s1_2, dtype='float')
+				var_f1_s1 = np.array(var_f1_s1, dtype='float')
+				var_f1_s2 = np.array(var_f1_s2, dtype='float')
+				var_f1_s1_2 = np.array(var_f1_s1_2, dtype='float')
+
+				tot_disp_x_s1 = np.array(tot_disp_x_s1, dtype='float') 
+				tot_disp_x_s2 = np.array(tot_disp_x_s2, dtype='float')
+				tot_f0_s1 = np.array(tot_f0_s1, dtype='float')
+				tot_f0_s2 = np.array(tot_f0_s2, dtype='float')
+				tot_f1_s1 = np.array(tot_f1_s1, dtype='float')
+				tot_f1_s2 = np.array(tot_f1_s2, dtype='float')
+
+				m_disp_x = timestep_disp_x[0]
+				m_f0 = timestep_forces0[0]
+				m_f1 = timestep_forces1[0]
+
+				var_disp_x = np.sum(coeff**2 for coeff in timestep_disp_x) - m_disp_x**2
+				var_d_x_s1 = np.sum(coeff**2 for coeff in var_disp_x_s1)
+				var_d_x_s2 = np.sum(coeff**2 for coeff in var_disp_x_s2)
+				var_d_x_s1_2 = np.sum(coeff**2 for coeff in var_disp_x_s1_2)
+				tot_d_x_s1 = np.sum(coeff**2 for coeff in tot_disp_x_s1)
+				tot_d_x_s2 = np.sum(coeff**2 for coeff in tot_disp_x_s2)
+
+				var_f0 = np.sum(coeff**2 for coeff in timestep_forces0) - m_f0**2
+				var_f0_s1 = np.sum(coeff**2 for coeff in var_f0_s1)
+				var_f0_s2 = np.sum(coeff**2 for coeff in var_f0_s2)
+				var_f0_s1_2 = np.sum(coeff**2 for coeff in var_f0_s1_2)
+				tot_f0_s1 = np.sum(coeff**2 for coeff in tot_f0_s1)
+				tot_f0_s2 = np.sum(coeff**2 for coeff in tot_f0_s2)
+
+				var_f1 = np.sum(coeff**2 for coeff in timestep_forces1) - m_f1**2
+				var_f1_s1 = np.sum(coeff**2 for coeff in var_f1_s1)
+				var_f1_s2 = np.sum(coeff**2 for coeff in var_f1_s2)
+				var_f1_s1_2 = np.sum(coeff**2 for coeff in var_f1_s1_2)
+				tot_f1_s1 = np.sum(coeff**2 for coeff in tot_f1_s1)
+				tot_f1_s2 = np.sum(coeff**2 for coeff in tot_f1_s2)
+
+				var_disp_x_all.append(var_disp_x)
+				disp_x_s1_all.append(var_d_x_s1/var_disp_x)
+				disp_x_s2_all.append(var_d_x_s2/var_disp_x)
+				disp_x_s1_2_all.append(var_d_x_s1_2/var_disp_x)
+				disp_x_s1_total.append(tot_d_x_s1/var_disp_x)
+				disp_x_s2_total.append(tot_d_x_s2/var_disp_x)
+
+				var_f0_all.append(var_f0)
+				f0_s1_all.append(var_f0_s1/var_f0)
+				f0_s2_all.append(var_f0_s2/var_f0)
+				f0_s1_2_all.append(var_f0_s1_2/var_f0)
+				f0_s1_total.append(tot_f0_s1/var_f0)
+				f0_s2_total.append(tot_f0_s2/var_f0)
+
+				var_f1_all.append(var_f1)
+				f1_s1_all.append(var_f1_s1/var_f1)
+				f1_s2_all.append(var_f1_s2/var_f1)
+				f1_s1_2_all.append(var_f1_s1_2/var_f1)
+				f1_s1_total.append(tot_f1_s1/var_f1)
+				f1_s2_total.append(tot_f1_s2/var_f1)
+
+				timestep_disp_x = []
+				timestep_forces0 = []
+				timestep_forces1 = []
+				var_disp_x_s1 = []
+				var_disp_x_s2 = []
+				var_disp_x_s1_2 = []
+				var_f0_s1 = []
+				var_f0_s2 = []
+				var_f0_s1_2 = []
+				var_f1_s1 = []
+				var_f1_s2 = []
+				var_f1_s1_2 = []
+				tot_disp_x_s1 = []
+				tot_disp_x_s2 = []
+				tot_f0_s1 = []
+				tot_f0_s2 = []
+				tot_f1_s1 = []
+				tot_f1_s2 = []
+
+		input_file.close()
+		
+	except IOError:
+		print_exc(file = stdout)
+		exit(0)
+
+def write_inter_coeff_to_file(out_datafile):
+	disp_x_s12 = sum(disp_x_s1_2_all)
+	f0_s12 = sum(f0_s1_2_all)
+	f1_s12 = sum(f1_s1_2_all)
+
+	try:
+		with open(out_datafile, 'a') as output_file:
+			line = datafile.split('.')[1] + '\n'
+			output_file.write(line)
+			line = 'displacement x s12 = ' + str(disp_x_s12) + '\n'
+			output_file.write(line)
+			line = 'force x s12 = ' + str(f0_s12) + '\n'
+			output_file.write(line)
+			line = 'force y s12 = ' + str(f1_s12) + '\n'
+			output_file.write(line)
+			output_file.write('\n')
+
+	except IOError:
+		print_exc(file = stdout)
+		exit(0)
+
+
+def plot_Sobol_indices():
+	# fig_s1, ax_s1 = subplots(3)
+	# fig_s2, ax_s2 = subplots(3)
+	# fig_s1_2, ax_s1_2 = subplots(3)
+	fig_s_all, ax_s_all = subplots(3)
+	fig_s_tot, ax_s_tot = subplots(3)
+
+	x_axis = np.linspace(0, no_of_timesteps, no_of_timesteps)
+
+	# fig_s1.suptitle("Sobol index 1")
+	# fig_s2.suptitle("Sobol index 2")
+	# fig_s1_2.suptitle("Sobol index 1_2")
+	fig_s_all.suptitle("Local Sobol indices")
+	fig_s_tot.suptitle("Total Sobol indices")
+
+	# ax_s1[0].plot(x_axis, var_disp_x_all, 'r--', label=" var x displacement", linewidth=2.0)
+	# ax_s1[0].plot(x_axis, disp_x_s1_all, 'g-.', label=" s1 x displacement", linewidth=2.0)
+	# ax_s1[0].set_ylabel('Sobol index S1')
+	# ax_s1[0].autoscale(enable=True, axis=u'both', tight=True)
+	# ax_s1[0].legend(loc="best", fancybox=True)
+	# ax_s1[0].grid()
+	# ax_s1[0].set_xlabel('no. of time steps')
+	# ax_s1[1].plot(x_axis, var_f0_all, 'r--', label="var x force", linewidth=2.0)
+	# ax_s1[1].plot(x_axis, f0_s1_all, 'g-.', label=" s1 x force", linewidth=2.0)
+	# ax_s1[1].set_ylabel('Sobol index S1')
+	# ax_s1[1].autoscale(enable=True, axis=u'both', tight=True)
+	# ax_s1[1].legend(loc="best", fancybox=True)
+	# ax_s1[1].grid()
+	# ax_s1[1].set_xlabel('no. of time steps')
+	# ax_s1[2].plot(x_axis, var_f1_all, 'r--', label="var y force", linewidth=2.0)
+	# ax_s1[2].plot(x_axis, f1_s1_all, 'g-.', label="s1 y force", linewidth=2.0)
+	# ax_s1[2].set_ylabel('Sobol index S1')
+	# ax_s1[2].autoscale(enable=True, axis=u'both', tight=True)
+	# ax_s1[2].legend(loc="best", fancybox=True)
+	# ax_s1[2].grid()
+	# ax_s1[2].set_xlabel('no. of time steps')
+
+	# ax_s2[0].plot(x_axis, var_disp_x_all, 'r--', label=" var x displacement", linewidth=2.0)
+	# ax_s2[0].plot(x_axis, disp_x_s2_all, 'g-.', label=" s2 x displacement", linewidth=2.0)
+	# ax_s2[0].set_ylabel('Sobol index S2')
+	# ax_s2[0].autoscale(enable=True, axis=u'both', tight=True)
+	# ax_s2[0].legend(loc="best", fancybox=True)
+	# ax_s2[0].grid()
+	# ax_s2[0].set_xlabel('no. of time steps')
+	# ax_s2[1].plot(x_axis, var_f0_all, 'r--', label="var x force", linewidth=2.0)
+	# ax_s2[1].plot(x_axis, f0_s2_all, 'g-.', label=" s2 x force", linewidth=2.0)
+	# ax_s2[1].set_ylabel('Sobol index S2')
+	# ax_s2[1].autoscale(enable=True, axis=u'both', tight=True)
+	# ax_s2[1].legend(loc="best", fancybox=True)
+	# ax_s2[1].grid()
+	# ax_s2[1].set_xlabel('no. of time steps')
+	# ax_s2[2].plot(x_axis, var_f1_all, 'r--', label="var y force", linewidth=2.0)
+	# ax_s2[2].plot(x_axis, f1_s2_all, 'g-.', label="s2 y force", linewidth=2.0)
+	# ax_s2[2].set_ylabel('Sobol index S2')
+	# ax_s2[2].autoscale(enable=True, axis=u'both', tight=True)
+	# ax_s2[2].legend(loc="best", fancybox=True)
+	# ax_s2[2].grid()
+	# ax_s2[2].set_xlabel('no. of time steps')
+
+	# ax_s1_2[0].plot(x_axis, var_disp_x_all, 'r--', label=" var x displacement", linewidth=2.0)
+	# ax_s1_2[0].plot(x_axis, disp_x_s1_2_all, 'g-.', label=" s1_2 x displacement", linewidth=2.0)
+	# ax_s1_2[0].set_ylabel('Sobol index S1_2')
+	# ax_s1_2[0].autoscale(enable=True, axis=u'both', tight=True)
+	# ax_s1_2[0].legend(loc="best", fancybox=True)
+	# ax_s1_2[0].grid()
+	# ax_s1_2[0].set_xlabel('no. of time steps')
+	# ax_s1_2[1].plot(x_axis, var_f0_all, 'r--', label="var x force", linewidth=2.0)
+	# ax_s1_2[1].plot(x_axis, f0_s1_2_all, 'g-.', label=" s1_2 x force", linewidth=2.0)
+	# ax_s1_2[1].set_ylabel('Sobol index S1_2')
+	# ax_s1_2[1].autoscale(enable=True, axis=u'both', tight=True)
+	# ax_s1_2[1].legend(loc="best", fancybox=True)
+	# ax_s1_2[1].grid()
+	# ax_s1_2[1].set_xlabel('no. of time steps')
+	# ax_s1_2[2].plot(x_axis, var_f1_all, 'r--', label="var y force", linewidth=2.0)
+	# ax_s1_2[2].plot(x_axis, f1_s1_2_all, 'g-.', label="s1_2 y force", linewidth=2.0)
+	# ax_s1_2[2].set_ylabel('Sobol index S1_2')
+	# ax_s1_2[2].autoscale(enable=True, axis=u'both', tight=True)
+	# ax_s1_2[2].legend(loc="best", fancybox=True)
+	# ax_s1_2[2].grid()
+	# ax_s1_2[2].set_xlabel('no. of time steps')
+
+	ax_s_all[0].plot(x_axis, disp_x_s1_all, 'r--', label=" s1 x displacement", linewidth=2.0)
+	ax_s_all[0].plot(x_axis, disp_x_s2_all, 'b-*', label=" s2 x displacement", linewidth=2.0)
+	ax_s_all[0].plot(x_axis, disp_x_s1_2_all, 'g-^', label=" s1_2 x displacement", linewidth=2.0)
+	ax_s_all[0].set_ylabel('Local Sobol indices')
+	ax_s_all[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_s_all[0].legend(loc="best", fancybox=True)
+	ax_s_all[0].grid()
+	ax_s_all[0].set_xlabel('no. of time steps')
+	ax_s_all[1].plot(x_axis, f0_s1_all, 'r--', label="s1 x force", linewidth=2.0)
+	ax_s_all[1].plot(x_axis, f0_s2_all, 'b-*', label="s2 x force", linewidth=2.0)
+	ax_s_all[1].plot(x_axis, f0_s1_2_all, 'g-^', label=" s1_2 x force", linewidth=2.0)
+	ax_s_all[1].set_ylabel('Local Sobol indices')
+	ax_s_all[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_s_all[1].legend(loc="best", fancybox=True)
+	ax_s_all[1].grid()
+	ax_s_all[1].set_xlabel('no. of time steps')
+	ax_s_all[2].plot(x_axis, f1_s1_all, 'r--', label="s1 y force", linewidth=2.0)
+	ax_s_all[2].plot(x_axis, f1_s2_all, 'b-*', label="s2 y force", linewidth=2.0)
+	ax_s_all[2].plot(x_axis, f1_s1_2_all, 'g-^', label="s1_2 y force", linewidth=2.0)
+	ax_s_all[2].set_ylabel('Sobol indices')
+	ax_s_all[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_s_all[2].legend(loc="best", fancybox=True)
+	ax_s_all[2].grid()
+	ax_s_all[2].set_xlabel('no. of time steps')
+
+	ax_s_tot[0].plot(x_axis, disp_x_s1_total , 'r--', label=" s1 total x displacement", linewidth=2.0)
+	ax_s_tot[0].plot(x_axis, disp_x_s2_total , 'b-*', label=" s2 total x displacement", linewidth=2.0)
+	ax_s_tot[0].set_ylabel('Total Sobol indices')
+	ax_s_tot[0].autoscale(enable=True, axis=u'both', tight=True)
+	ax_s_tot[0].legend(loc="best", fancybox=True)
+	ax_s_tot[0].grid()
+	ax_s_tot[0].set_xlabel('no. of time steps')
+	ax_s_tot[1].plot(x_axis, f0_s1_total, 'r--', label="s1 total x force", linewidth=2.0)
+	ax_s_tot[1].plot(x_axis, f0_s2_total, 'b-*', label="s2 total x force", linewidth=2.0)
+	ax_s_tot[1].set_ylabel('Total Sobol indices')
+	ax_s_tot[1].autoscale(enable=True, axis=u'both', tight=True)
+	ax_s_tot[1].legend(loc="best", fancybox=True)
+	ax_s_tot[1].grid()
+	ax_s_tot[1].set_xlabel('no. of time steps')
+	ax_s_tot[2].plot(x_axis, f1_s1_total, 'r--', label="s1 total y force", linewidth=2.0)
+	ax_s_tot[2].plot(x_axis, f1_s2_total, 'b-*', label="s2 total y force", linewidth=2.0)
+	ax_s_tot[2].set_ylabel('Total Sobol indices')
+	ax_s_tot[2].autoscale(enable=True, axis=u'both', tight=True)
+	ax_s_tot[2].legend(loc="best", fancybox=True)
+	ax_s_tot[2].grid()
+	ax_s_tot[2].set_xlabel('no. of time steps')
+
+	show()
+
+	# fig_s1.savefig("images/" + "var_S1.png")
+	# fig_s2.savefig("images/" + "var_S2.png")
+	# fig_s1_2.savefig("images/" + "var_S1_2.png")
+	fig_s_all.savefig("images/" + datafile.split('.')[1] + "_Local_Sobol_indices.png")
+	fig_s_tot.savefig("images/" + datafile.split('.')[1] + "_Total_Sobol_indices.png")
+
+if __name__ == "__main__":
+
+	if len(argv) != 3:
+		print "Error in " + argv[0] + "!"
+		print "Usage: " + argv[0] + " datafile no_of_coeff"
+		exit(0)
+
+	datafile = argv[1]
+	no_of_coeff = int(argv[2])
+
+	var_disp_x_all = []
+	var_f0_all = []
+	var_f1_all = []
+
+	disp_x_s1_all = []
+	disp_x_s2_all = []
+	disp_x_s1_2_all = []
+	f0_s1_all = []
+	f0_s2_all = []
+	f0_s1_2_all = []
+	f1_s1_all = []
+	f1_s2_all = []
+	f1_s1_2_all = []
+
+	disp_x_s1_total = []
+	disp_x_s2_total = []
+
+	f0_s1_total = []
+	f0_s2_total = []
+
+	f1_s1_total = []
+	f1_s2_total = []
+
+	disp_x_s12 = 0.
+	f0_s12 = 0.
+	f1_s12 = 0.
+
+	dict_of_coeff = coeff_dict()
+	get_Sobol_indices(datafile, no_of_coeff, dict_of_coeff)
+	no_of_timesteps = len(var_disp_x_all)
+
+	out_datafile = 'files/comb_indices.txt'
+	write_inter_coeff_to_file(out_datafile)
+
+	plot_Sobol_indices()
